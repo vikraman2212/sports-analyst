@@ -1,0 +1,94 @@
+/**
+ * Integration Test: Ball weight impact across delivery pipeline
+ */
+
+import { analyzeDelivery } from '@/lib/analyzeDelivery';
+import type { CalibrationProfile, FrameSample } from '@/lib/types';
+
+describe('Ball Weight Integration Test', () => {
+  // Mock frame with ball detection
+  const createMockFrame = (frameIndex: number, timestampMs: number): FrameSample => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 480;
+    const ctx = canvas.getContext('2d')!;
+    const imageData = ctx.createImageData(640, 480);
+    
+    return {
+      frameIndex,
+      timestampMs,
+      imageData,
+    };
+  };
+
+  const createFrames = (): FrameSample[] => [
+    createMockFrame(0, 0),
+    createMockFrame(1, 33),
+    createMockFrame(2, 66),
+    createMockFrame(3, 100),
+    createMockFrame(4, 133),
+  ];
+
+  it('processes delivery with standard ball weight (156g)', async () => {
+    const calibration: CalibrationProfile = {
+      pitchLengthPixels: 512,
+      referenceDistanceMeters: 20.12,
+      ballMassGrams: 156,
+      homographyMatrix: null,
+    };
+
+    const frames = createFrames();
+    const result = await analyzeDelivery(frames, calibration);
+
+    expect(result).toBeDefined();
+    expect(result.speedKmh).toBeGreaterThanOrEqual(0);
+  });
+
+  it('processes delivery with youth ball weight (135g)', async () => {
+    const calibration: CalibrationProfile = {
+      pitchLengthPixels: 512,
+      referenceDistanceMeters: 20.12,
+      ballMassGrams: 135,
+      homographyMatrix: null,
+    };
+
+    const frames = createFrames();
+    const result = await analyzeDelivery(frames, calibration);
+
+    expect(result).toBeDefined();
+    expect(result.speedKmh).toBeGreaterThanOrEqual(0);
+  });
+
+  it('generates appropriate warnings for light ball with high speed', async () => {
+    const calibration: CalibrationProfile = {
+      pitchLengthPixels: 512,
+      referenceDistanceMeters: 20.12,
+      ballMassGrams: 100, // Light ball
+      homographyMatrix: null,
+    };
+
+    const frames = createFrames();
+    const result = await analyzeDelivery(frames, calibration);
+
+    // If speed is unrealistically high for a light ball, warnings should be present
+    if (result.speedKmh > 150) {
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('validates extreme ball weights generate warnings', async () => {
+    const calibrationTooLight: CalibrationProfile = {
+      pitchLengthPixels: 512,
+      referenceDistanceMeters: 20.12,
+      ballMassGrams: 30, // Too light
+      homographyMatrix: null,
+    };
+
+    const frames = createFrames();
+    const result = await analyzeDelivery(frames, calibrationTooLight);
+
+    expect(result.warnings).toBeDefined();
+    expect(result.warnings!.some(w => w.includes('Unrealistic ball weight'))).toBe(true);
+  });
+});

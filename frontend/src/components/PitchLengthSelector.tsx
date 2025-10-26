@@ -87,15 +87,28 @@ export function PitchLengthSelector({ onChange, className = '' }: PitchLengthSel
         }
         .label {
           font-size: 0.9rem;
-          color: var(--tw-prose-invert, rgba(255,255,255,0.85));
+          color: #374151;
           font-weight: 600;
+        }
+        @media (prefers-color-scheme: dark) {
+          .label {
+            color: #f3f4f6;
+          }
         }
         .select {
           padding: 0.5rem 0.75rem;
           border-radius: 8px;
-          border: 1px solid rgba(255,255,255,0.2);
-          background: rgba(255,255,255,0.05);
-          color: white;
+          border: 1px solid #e5e7eb;
+          background: white;
+          color: #1f2937;
+          font-size: 0.9rem;
+        }
+        @media (prefers-color-scheme: dark) {
+          .select {
+            border-color: #4b5563;
+            background: #1f2937;
+            color: #f3f4f6;
+          }
         }
         .custom-input {
           display: flex;
@@ -106,25 +119,45 @@ export function PitchLengthSelector({ onChange, className = '' }: PitchLengthSel
           width: 120px;
           padding: 0.5rem 0.75rem;
           border-radius: 8px;
-          border: 1px solid rgba(255,255,255,0.2);
-          background: rgba(255,255,255,0.05);
-          color: white;
+          border: 1px solid #e5e7eb;
+          background: white;
+          color: #1f2937;
+          font-size: 0.9rem;
+        }
+        @media (prefers-color-scheme: dark) {
+          .input {
+            border-color: #4b5563;
+            background: #1f2937;
+            color: #f3f4f6;
+          }
         }
         .hint {
           font-size: 0.8rem;
-          color: rgba(255,255,255,0.6);
+          color: #6b7280;
+        }
+        @media (prefers-color-scheme: dark) {
+          .hint {
+            color: #9ca3af;
+          }
         }
         .hint-banner {
           width: 100%;
           margin-top: 0.5rem;
           padding: 0.5rem 0.75rem;
           border-radius: 8px;
-          background: rgba(59,130,246,0.15);
-          border: 1px solid rgba(59,130,246,0.4);
-          color: rgba(255,255,255,0.9);
+          background: #dbeafe;
+          border: 1px solid #93c5fd;
+          color: #1e40af;
           display: flex;
           align-items: center;
           justify-content: space-between;
+        }
+        @media (prefers-color-scheme: dark) {
+          .hint-banner {
+            background: rgba(59,130,246,0.15);
+            border-color: rgba(59,130,246,0.4);
+            color: #93c5fd;
+          }
         }
         .hint-dismiss {
           background: transparent;

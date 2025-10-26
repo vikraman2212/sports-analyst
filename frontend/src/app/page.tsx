@@ -12,7 +12,9 @@ import { CameraView } from '@/components/CameraView';
 import { SpeedDisplay } from '@/components/SpeedDisplay';
 import { createCricketPitchCalibration, createPitchCalibration } from '@/lib/calibration';
 import { PitchLengthSelector } from '@/components/PitchLengthSelector';
+import { BallWeightSelector } from '@/components/BallWeightSelector';
 import { usePitchLength } from '@/hooks/usePitchLength';
+import { useBallWeight } from '@/hooks/useBallWeight';
 import type { DeliveryResult } from '@/lib/types';
 
 /**
@@ -26,15 +28,16 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { state: pitchState } = usePitchLength();
+  const { state: ballWeightState } = useBallWeight();
 
   // Create default calibration (memoized to avoid recreating on every render)
   const calibration = useMemo(() => {
     // Standard uses default helper; others use explicit meters
     if (pitchState.meters === 20.12) {
-      return createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS);
+      return createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, ballWeightState.grams);
     }
-    return createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters);
-  }, [pitchState.meters]);
+    return createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters, ballWeightState.grams);
+  }, [pitchState.meters, ballWeightState.grams]);
 
   const pitchLabel = useMemo(() => (
     pitchState.meters === 20.12 ? 'Standard' : (pitchState.meters === 16 ? 'Youth' : 'Custom')
@@ -119,9 +122,10 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Camera Feed
               </h2>
-              {/* Pitch selector */}
-              <div className="mb-4">
+              {/* Config selectors */}
+              <div className="mb-4 space-y-3">
                 <PitchLengthSelector />
+                <BallWeightSelector />
               </div>
               <CameraView
                 calibration={calibration}
