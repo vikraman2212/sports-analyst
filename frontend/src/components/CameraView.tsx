@@ -21,6 +21,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useCameraFeed } from '../hooks/useCameraFeed';
 import { useInference } from '../hooks/useInference';
+import { useCameraDiagnostics } from '../hooks/useCameraDiagnostics';
+import { CameraGuidance } from './CameraGuidance';
 import type { CalibrationProfile, DeliveryResult } from '../lib/types';
 
 export interface CameraViewProps {
@@ -75,6 +77,7 @@ export function CameraView({
     isActive: isCameraActive,
     isLoading: isCameraLoading,
     error: cameraError,
+    stream,
     videoRef,
     startCamera,
     stopCamera,
@@ -83,6 +86,9 @@ export function CameraView({
     facingMode: 'environment', // Rear camera on mobile
     frameRate: 30,
   });
+
+  // Camera diagnostics hook
+  const { diagnostics, updateWithFrame } = useCameraDiagnostics(stream);
 
   // Inference hook
   const {
@@ -124,11 +130,13 @@ export function CameraView({
     const frame = captureFrame();
     if (frame) {
       addFrame(frame);
+      // Update diagnostics with captured frame
+      updateWithFrame(frame.imageData, frame.timestampMs);
     }
 
     // Continue capturing at ~30fps
     recordingInterval.current = window.setTimeout(captureLoop, 33);
-  }, [captureFrame, addFrame]);
+  }, [captureFrame, addFrame, updateWithFrame]);
 
   /**
    * Start recording delivery
@@ -215,6 +223,13 @@ export function CameraView({
           <div className="camera-view__overlay camera-view__overlay--loading">
             <div className="camera-view__spinner" />
             <p className="camera-view__message">Starting camera...</p>
+          </div>
+        )}
+
+        {/* Camera Guidance Overlay */}
+        {isCameraActive && !isRecording.current && !isAnalyzing && !hasResult && !hasError && (
+          <div className="camera-view__guidance-overlay">
+            <CameraGuidance diagnostics={diagnostics} showTechnicalDetails />
           </div>
         )}
 
@@ -388,6 +403,23 @@ export function CameraView({
           width: 100%;
           height: 100%;
           object-fit: cover;
+        }
+
+        .camera-view__guidance-overlay {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          right: 1rem;
+          max-width: 400px;
+          z-index: 10;
+        }
+
+        @media (max-width: 640px) {
+          .camera-view__guidance-overlay {
+            top: 0.5rem;
+            left: 0.5rem;
+            right: 0.5rem;
+          }
         }
 
         .camera-view__overlay {

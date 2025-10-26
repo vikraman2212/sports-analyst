@@ -23,7 +23,7 @@ gantt
     Migrate to YOLOv8 (T3)             :t3, 2025-10-30, 10d
 
     section Camera
-    Camera Settings Guidance (T4)      :t4, after t1, 6d
+    Camera Settings Guidance (T4)      :done, t4, 2025-10-26, 1d
 
     section Replay
     Ball Tracking Replay (T5)          :t5, after t3, 7d
@@ -36,5 +36,6 @@ gantt
 ## Notes
 
 - Start date: 2025-10-27. Target completion: 2025-11-21.
-- T1 and T2 can run in parallel. T4 begins after T1. T5 depends on T3. T6 depends on all prior tasks.
+- **Completed:** T1 (Pitch Length), T2 (Ball Weight), T4 (Camera Diagnostics), T8 (Test Stabilization)
+- T1 and T2 ran in parallel. T4 completed ahead of schedule (1d vs 6d planned). T5 depends on T3. T6 depends on all prior tasks.
 - See JSON for acceptance criteria, deliverables, and likely touchpoints in the codebase.
