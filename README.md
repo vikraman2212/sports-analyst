@@ -20,7 +20,7 @@ Real-time cricket ball detection and speed analysis using computer vision and ma
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - pnpm (recommended) or npm
 - Modern browser with camera support
 
@@ -75,6 +75,7 @@ location.reload();
 ```
 
 Or create `frontend/.env.local`:
+
 ```bash
 NEXT_PUBLIC_USE_MOCK_CAMERA=true
 ```
@@ -141,6 +142,7 @@ sports-analyst/
 ```
 
 Choose from:
+
 1. Run dev server on port 3001
 2. Run with HTTPS (for mobile)
 3. Enable mock camera
@@ -178,15 +180,18 @@ cd frontend && rm -rf node_modules && pnpm install
 ### Common Errors
 
 **"Maximum update depth exceeded"**
+
 - Fixed in latest version
 - See [BUG_FIX_CAMERA.md](./BUG_FIX_CAMERA.md)
 
 **Port already in use**
+
 ```bash
 lsof -ti:3001 | xargs kill -9
 ```
 
 **Camera shows black screen**
+
 - Check camera privacy cover
 - Verify browser permissions
 - Try restarting browser

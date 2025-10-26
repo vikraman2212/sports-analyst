@@ -1,0 +1,202 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-10-26T00:00:00Z",
+  "project": {
+    "name": "Speedometer – Cricket Ball Tracking Enhancements",
+    "branch": "speed-001-cricket-ball-tracking",
+    "owner": "vikraman2212/sports-analyst"
+  },
+  "timeline": {
+    "start": "2025-10-27",
+    "targetEnd": "2025-11-21",
+    "timezone": "UTC"
+  },
+  "assumptions": [
+    "One primary engineer, with occasional support for model research/testing.",
+    "Work days are Mon–Fri; durations are approximate and overlap where feasible.",
+    "No fundamental architectural changes required to frontend app router or backend.",
+    "Existing detection pipeline can be adapted behind the detection adapter abstraction."
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "description": "YOLOv8 pre-trained model might not generalize to small, fast cricket balls.",
+      "mitigation": "Prototype with multiple model sizes (n/s/m), experiment with higher FPS sampling, and consider light fine-tuning with available clips."
+    },
+    {
+      "id": "R2",
+      "description": "Camera metadata (FPS/exposure) not reliably available across devices.",
+      "mitigation": "Infer effective FPS via frame arrival timestamps, implement heuristic exposure checks via brightness variance, and provide clear user guidance."
+    },
+    {
+      "id": "R3",
+      "description": "Replay buffering may increase memory usage on low-end devices.",
+      "mitigation": "Ring buffer with configurable max seconds; allow resolution downscaling for buffer frames."
+    }
+  ],
+  "milestones": [
+    { "id": "M1", "name": "Config params ready (pitch, weight)", "target": "2025-10-29" },
+    { "id": "M2", "name": "YOLOv8 detector integrated", "target": "2025-11-12" },
+    { "id": "M3", "name": "Camera guidance MVP", "target": "2025-11-10" },
+    { "id": "M4", "name": "Replay with overlays", "target": "2025-11-19" },
+    { "id": "M5", "name": "Docs & tests complete", "target": "2025-11-21" }
+  ],
+  "tasks": [
+    {
+      "id": "T1",
+      "name": "Configurable Pitch Length",
+      "description": "Allow selection of pitch length (20.12m default, 16m youth, custom). Use in speed/trajectory calculations.",
+      "start": "2025-10-27",
+      "durationDays": 3,
+      "dependsOn": [],
+      "status": "completed",
+      "completedAt": "2025-10-26",
+      "owner": "frontend",
+      "deliverables": [
+        "UI selector for pitch length (predefined + custom)",
+        "Plumbed into speed calculation pipeline",
+        "Unit & integration tests for multiple pitch values"
+      ],
+      "acceptanceCriteria": [
+        "Speed output changes consistently when switching pitch values",
+        "Persisted selection across sessions"
+      ],
+      "likelyFiles": [
+        "frontend/src/lib/speed-calculation/speed.ts",
+        "frontend/src/lib/speed-calculation/index.ts",
+        "frontend/src/components/SpeedDisplay.tsx",
+        "frontend/src/hooks/useInference.ts",
+        "frontend/src/lib/types.ts"
+      ]
+    },
+    {
+      "id": "T2",
+      "name": "Configurable Ball Weight",
+      "description": "Introduce ball mass parameter impacting deceleration/drag heuristics and smoothing thresholds.",
+      "start": "2025-10-27",
+      "durationDays": 3,
+      "dependsOn": [],
+      "status": "planned",
+      "owner": "fullstack",
+      "deliverables": [
+        "UI input for ball weight with presets (156g, 135g, synthetic)",
+        "Updated physics/smoothing to reference mass",
+        "Tests covering extreme values"
+      ],
+      "acceptanceCriteria": [
+        "Trajectory smoothing adapts to mass",
+        "Warnings for unrealistic inputs (e.g., <50g, >300g)"
+      ],
+      "likelyFiles": [
+        "frontend/src/lib/speed-calculation/trajectorySmoothing.ts",
+        "frontend/src/lib/speed-calculation/warnings.ts",
+        "frontend/src/components/SpeedDisplay.tsx",
+        "python/speedometer/speed_calc.py",
+        "frontend/src/lib/types.ts"
+      ]
+    },
+    {
+      "id": "T3",
+      "name": "Migrate Detection to YOLOv8",
+      "description": "Replace current ONNX detector with YOLOv8; evaluate pre-trained small-object models.",
+      "start": "2025-10-30",
+      "durationDays": 10,
+      "dependsOn": [],
+      "status": "planned",
+      "owner": "ml",
+      "deliverables": [
+        "YOLOv8 runtime wrapper and adapter",
+        "Config to select model size and confidence thresholds",
+        "Benchmark report vs current detector"
+      ],
+      "acceptanceCriteria": [
+        "Equal or better precision/recall on sample clips",
+        "Throughput suitable for 30–60 FPS at 720p on target device"
+      ],
+      "likelyFiles": [
+        "frontend/src/lib/detection/adapter.ts",
+        "frontend/src/lib/detection/index.ts",
+        "frontend/src/lib/detection/onnxRuntime.ts",
+        "frontend/src/lib/detection/types.ts"
+      ]
+    },
+    {
+      "id": "T4",
+      "name": "Camera Settings Detection & Guidance",
+      "description": "Detect resolution/FPS/exposure from feed; infer effective FPS; provide recommendations and warnings.",
+      "start": "2025-11-03",
+      "durationDays": 6,
+      "dependsOn": ["T1"],
+      "status": "planned",
+      "owner": "frontend",
+      "deliverables": [
+        "Diagnostics hook to read/infer camera parameters",
+        "UI banner/panel with recommendations",
+        "Automated warnings integrated with existing warnings.ts"
+      ],
+      "acceptanceCriteria": [
+        "Shows detected settings and clear guidance",
+        "Blocks or warns when FPS < 30 or exposure too high"
+      ],
+      "likelyFiles": [
+        "frontend/src/hooks/useCameraFeed.ts",
+        "frontend/src/lib/metrics/timing.ts",
+        "frontend/src/components/CameraView.tsx",
+        "frontend/src/lib/speed-calculation/warnings.ts"
+      ]
+    },
+    {
+      "id": "T5",
+      "name": "Ball Tracking Replay",
+      "description": "Buffer frames with metadata and allow post-delivery replay with overlays and export.",
+      "start": "2025-11-11",
+      "durationDays": 7,
+      "dependsOn": ["T3"],
+      "status": "planned",
+      "owner": "frontend",
+      "deliverables": [
+        "Ring buffer for recent frames + detections",
+        "Replay player UI with play/pause/seek",
+        "Overlay trajectory and speed indicators",
+        "Export JSON of replay data"
+      ],
+      "acceptanceCriteria": [
+        "Replay matches live overlays within tolerance",
+        "Export opens correctly with current jsonExport util"
+      ],
+      "likelyFiles": [
+        "frontend/src/components/TrajectoryOverlay.tsx",
+        "frontend/src/components/CameraView.tsx",
+        "frontend/src/components/ReplayPlayer.tsx",
+        "frontend/src/lib/export/jsonExport.ts",
+        "frontend/src/lib/detection/frameSampler.ts"
+      ]
+    },
+    {
+      "id": "T6",
+      "name": "Docs & Tests",
+      "description": "Update architecture docs, add usage docs, and extend unit/integration tests.",
+      "start": "2025-11-18",
+      "durationDays": 4,
+      "dependsOn": ["T1", "T2", "T3", "T4", "T5"],
+      "status": "planned",
+      "owner": "all",
+      "deliverables": [
+        "Updated docs in docs/",
+        "New/updated tests in frontend/src/tests and python/tests",
+        "Checklist updates in TESTING_CHECKLIST.md"
+      ],
+      "acceptanceCriteria": [
+        "CI green on unit+integration",
+        "Docs explain configuration and camera guidance"
+      ],
+      "likelyFiles": [
+        "docs/architecture.md",
+        "docs/manual-testing.md",
+        "frontend/src/tests",
+        "python/tests",
+        "TESTING_CHECKLIST.md"
+      ]
+    }
+  ]
+}

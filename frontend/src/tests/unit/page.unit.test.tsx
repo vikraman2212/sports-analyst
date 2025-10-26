@@ -59,10 +59,12 @@ interface MockSpeedDisplayProps {
   result: DeliveryResult | null;
   showDetails?: boolean;
   showWarnings?: boolean;
+  pitchMeters?: number;
+  pitchLabel?: string;
 }
 
 jest.mock('../../components/SpeedDisplay', () => ({
-  SpeedDisplay: ({ result, showDetails, showWarnings }: MockSpeedDisplayProps) => {
+  SpeedDisplay: ({ result, showDetails, showWarnings, pitchMeters, pitchLabel }: MockSpeedDisplayProps) => {
     return (
       <div data-testid="speed-display">
         {result ? (
@@ -70,6 +72,7 @@ jest.mock('../../components/SpeedDisplay', () => ({
             <div>Speed: {result.speedKmh} km/h</div>
             <div>Confidence: {result.confidence}</div>
             <div>Detections: {result.detectionCount}</div>
+            {typeof pitchMeters === 'number' && <div>Pitch: {pitchMeters}m ({pitchLabel})</div>}
             {showDetails && <div>Details shown</div>}
             {showWarnings && <div>Warnings shown</div>}
           </>
@@ -115,9 +118,9 @@ describe('Home Page', () => {
     it('should render calibration info card', () => {
       render(<Home />);
 
-      expect(screen.getByText('⚙️ Calibration Settings')).toBeInTheDocument();
-      expect(screen.getByText('Mode:')).toBeInTheDocument();
-      expect(screen.getByText('Default (22-yard pitch)')).toBeInTheDocument();
+  expect(screen.getByText('⚙️ Calibration Settings')).toBeInTheDocument();
+  expect(screen.getByText('Mode:')).toBeInTheDocument();
+  expect(screen.getByText('Standard (22-yard pitch)')).toBeInTheDocument();
     });
 
     it('should not show "New Delivery" button initially', () => {
@@ -363,7 +366,7 @@ describe('Home Page', () => {
       render(<Home />);
 
       expect(screen.getByText('512px')).toBeInTheDocument();
-      expect(screen.getByText('20.12m (Cricket Standard)')).toBeInTheDocument();
+  expect(screen.getByText('20.12m (Cricket Standard)')).toBeInTheDocument();
     });
   });
 

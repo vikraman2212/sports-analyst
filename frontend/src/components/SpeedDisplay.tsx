@@ -42,6 +42,16 @@ export interface SpeedDisplayProps {
    * Callback when user interacts (future: mph/kmh toggle)
    */
   onInteraction?: () => void;
+
+  /**
+   * Optional current pitch reference length in meters for context
+   */
+  pitchMeters?: number;
+
+  /**
+   * Optional label for the current pitch selection (e.g., Standard, Youth, Custom)
+   */
+  pitchLabel?: string;
 }
 
 /**
@@ -108,6 +118,8 @@ export function SpeedDisplay({
   showWarnings = true,
   className = '',
   onInteraction,
+  pitchMeters,
+  pitchLabel,
 }: SpeedDisplayProps) {
   // No result state
   if (!result) {
@@ -170,7 +182,7 @@ export function SpeedDisplay({
     <div 
       className={`speed-display ${className}`}
       onClick={onInteraction}
-      role={onInteraction ? 'button' : 'region'}
+      role={onInteraction ? 'button' : undefined}
       aria-label="Ball speed analysis results"
       tabIndex={onInteraction ? 0 : undefined}
       onKeyDown={onInteraction ? (e) => {
@@ -238,6 +250,19 @@ export function SpeedDisplay({
                 {result.trajectoryPoints.length} points
               </div>
             </div>
+
+            {/* Pitch Reference */}
+            {typeof pitchMeters === 'number' && (
+              <div className="speed-display__detail-item">
+                <div className="speed-display__detail-label">Pitch Ref</div>
+                <div className="speed-display__detail-value">
+                  {pitchMeters.toFixed(2)} m
+                  {pitchLabel ? (
+                    <span className="speed-display__quality-badge">{pitchLabel}</span>
+                  ) : null}
+                </div>
+              </div>
+            )}
 
             {/* Confidence Description */}
             <div className="speed-display__detail-item speed-display__detail-item--full">

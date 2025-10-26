@@ -243,7 +243,7 @@ export function TrajectoryOverlay({
         zIndex: 10,
       }}
       role="img"
-      aria-label={`Ball trajectory visualization showing ${trajectoryPoints.length} detection points`}
+      aria-label="Ball trajectory overlay"
     />
   );
 }

@@ -10,7 +10,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { CameraView } from '@/components/CameraView';
 import { SpeedDisplay } from '@/components/SpeedDisplay';
-import { createCricketPitchCalibration } from '@/lib/calibration';
+import { createCricketPitchCalibration, createPitchCalibration } from '@/lib/calibration';
+import { PitchLengthSelector } from '@/components/PitchLengthSelector';
+import { usePitchLength } from '@/hooks/usePitchLength';
 import type { DeliveryResult } from '@/lib/types';
 
 /**
@@ -23,12 +25,20 @@ export default function Home() {
   const [currentResult, setCurrentResult] = useState<DeliveryResult | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { state: pitchState } = usePitchLength();
 
   // Create default calibration (memoized to avoid recreating on every render)
-  const calibration = useMemo(
-    () => createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS),
-    []
-  );
+  const calibration = useMemo(() => {
+    // Standard uses default helper; others use explicit meters
+    if (pitchState.meters === 20.12) {
+      return createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS);
+    }
+    return createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters);
+  }, [pitchState.meters]);
+
+  const pitchLabel = useMemo(() => (
+    pitchState.meters === 20.12 ? 'Standard' : (pitchState.meters === 16 ? 'Youth' : 'Custom')
+  ), [pitchState.meters]);
 
   /**
    * Handle successful delivery analysis
@@ -109,6 +119,10 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Camera Feed
               </h2>
+              {/* Pitch selector */}
+              <div className="mb-4">
+                <PitchLengthSelector />
+              </div>
               <CameraView
                 calibration={calibration}
                 onAnalysisComplete={handleAnalysisComplete}
@@ -163,6 +177,8 @@ export default function Home() {
                 result={currentResult}
                 showDetails={true}
                 showWarnings={true}
+                pitchMeters={pitchState.meters}
+                pitchLabel={pitchLabel}
               />
             </div>
 
@@ -175,7 +191,7 @@ export default function Home() {
                 <div className="flex justify-between">
                   <dt className="text-gray-600 dark:text-gray-400">Mode:</dt>
                   <dd className="text-gray-900 dark:text-gray-100 font-medium">
-                    Default (22-yard pitch)
+                    {pitchState.meters === 20.12 ? 'Standard (22-yard pitch)' : (pitchState.meters === 16 ? 'Youth (16m)' : 'Custom')}
                   </dd>
                 </div>
                 <div className="flex justify-between">
@@ -187,12 +203,12 @@ export default function Home() {
                 <div className="flex justify-between">
                   <dt className="text-gray-600 dark:text-gray-400">Reference:</dt>
                   <dd className="text-gray-900 dark:text-gray-100 font-medium">
-                    20.12m (Cricket Standard)
+                    {pitchState.meters}m {pitchState.meters === 20.12 ? '(Cricket Standard)' : ''}
                   </dd>
                 </div>
               </dl>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                ℹ️ Using default calibration for prototype. Advanced calibration coming soon.
+                ℹ️ You can change pitch length presets above. Your selection is saved on this device.
               </p>
             </div>
           </div>
