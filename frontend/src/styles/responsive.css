@@ -1,0 +1,410 @@
+/**
+ * Responsive Layout Refinements
+ * 
+ * Mobile-first responsive design system for cricket ball tracking app.
+ * Breakpoints:
+ * - Mobile: < 640px
+ * - Tablet: 640px - 1024px
+ * - Desktop: > 1024px
+ */
+
+/* ===== Base Mobile Styles (Default) ===== */
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 1rem;
+}
+
+/* ===== Tablet Styles (min-width: 640px) ===== */
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+    padding: 0 1.5rem;
+  }
+
+  .page-layout {
+    gap: 1.5rem;
+  }
+
+  /* Two-column layouts on tablet */
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  /* Camera and speed display side-by-side on tablet landscape */
+  @media (orientation: landscape) {
+    .analysis-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+  }
+}
+
+/* ===== Desktop Styles (min-width: 1024px) ===== */
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1280px;
+    padding: 0 2rem;
+  }
+
+  .page-layout {
+    gap: 2rem;
+  }
+
+  /* Three-column layouts on desktop */
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  /* Full-width camera with sidebar for controls */
+  .analysis-layout {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Stack camera and trajectory vertically on left, speed/controls on right */
+  .camera-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-section {
+    position: sticky;
+    top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
+/* ===== Large Desktop (min-width: 1536px) ===== */
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1536px;
+  }
+
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ===== Touch Device Optimizations ===== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets for mobile */
+  button, 
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover effects on touch devices */
+  button:hover,
+  a:hover {
+    transform: none;
+  }
+
+  /* Add active state instead */
+  button:active,
+  a:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ===== Print Styles ===== */
+
+@media print {
+  .camera-view,
+  .controls,
+  button {
+    display: none;
+  }
+
+  .speed-display,
+  .trajectory-overlay {
+    page-break-inside: avoid;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+}
+
+/* ===== High Contrast Mode ===== */
+
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+  }
+
+  button {
+    border: 2px solid currentColor !important;
+  }
+
+  .speed-display {
+    border: 3px solid white !important;
+  }
+}
+
+/* ===== Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .camera-view__spinner {
+    animation: none;
+    opacity: 1;
+  }
+
+  .camera-view__recording-dot {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ===== Portrait vs Landscape ===== */
+
+/* Portrait Mobile - Stack everything vertically */
+@media (max-width: 640px) and (orientation: portrait) {
+  .page-layout {
+    flex-direction: column;
+  }
+
+  .camera-view {
+    min-height: 60vh;
+  }
+
+  .speed-display {
+    min-height: auto;
+  }
+}
+
+/* Landscape Mobile - Optimize for horizontal space */
+@media (max-width: 900px) and (orientation: landscape) {
+  .page-layout {
+    flex-direction: row;
+  }
+
+  .camera-view {
+    flex: 2;
+    min-height: 100vh;
+  }
+
+  .speed-display {
+    flex: 1;
+    overflow-y: auto;
+  }
+}
+
+/* ===== Safe Area Insets (for notched devices) ===== */
+
+@supports (padding: max(0px)) {
+  .container {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .page-layout {
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  /* Adjust controls for home indicator area on iOS */
+  .camera-view__controls {
+    padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  }
+}
+
+/* ===== Dark Mode Overrides ===== */
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  /* Ensure sufficient contrast in dark mode */
+  .speed-display {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  }
+
+  .camera-view__overlay {
+    background: rgba(0, 0, 0, 0.85);
+  }
+}
+
+/* ===== Utility Classes ===== */
+
+.show-mobile {
+  display: block;
+}
+
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .show-mobile {
+    display: none;
+  }
+
+  .hide-mobile {
+    display: block;
+  }
+}
+
+.show-tablet {
+  display: none;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .show-tablet {
+    display: block;
+  }
+}
+
+.show-desktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .show-desktop {
+    display: block;
+  }
+}
+
+/* ===== Aspect Ratio Utilities ===== */
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+/* ===== Spacing Utilities ===== */
+
+.spacing-mobile {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .spacing-mobile {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spacing-mobile {
+    padding: 2rem;
+  }
+}
+
+/* ===== Typography Scaling ===== */
+
+.text-responsive-sm {
+  font-size: 0.875rem;
+}
+
+.text-responsive-base {
+  font-size: 1rem;
+}
+
+.text-responsive-lg {
+  font-size: 1.125rem;
+}
+
+.text-responsive-xl {
+  font-size: 1.25rem;
+}
+
+.text-responsive-2xl {
+  font-size: 1.5rem;
+}
+
+.text-responsive-3xl {
+  font-size: 2rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-sm {
+    font-size: 0.9375rem;
+  }
+
+  .text-responsive-base {
+    font-size: 1.0625rem;
+  }
+
+  .text-responsive-lg {
+    font-size: 1.25rem;
+  }
+
+  .text-responsive-xl {
+    font-size: 1.5rem;
+  }
+
+  .text-responsive-2xl {
+    font-size: 1.875rem;
+  }
+
+  .text-responsive-3xl {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-sm {
+    font-size: 1rem;
+  }
+
+  .text-responsive-base {
+    font-size: 1.125rem;
+  }
+
+  .text-responsive-lg {
+    font-size: 1.5rem;
+  }
+
+  .text-responsive-xl {
+    font-size: 1.875rem;
+  }
+
+  .text-responsive-2xl {
+    font-size: 2.25rem;
+  }
+
+  .text-responsive-3xl {
+    font-size: 3rem;
+  }
+}

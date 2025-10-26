@@ -1,0 +1,48 @@
+openapi: 3.1.0
+info:
+  title: (Future) Ball Analysis Session API
+  version: 0.1.0-draft
+  description: Placeholder for potential backend service. Not implemented in prototype.
+paths:
+  /analyze:
+    post:
+      summary: Analyze a cricket delivery (NOT IMPLEMENTED IN PROTOTYPE)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                frames:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      index: { type: integer }
+                      timestampMs: { type: integer }
+                      dataRef: { type: string, description: "Data URL or reference key" }
+                calibration:
+                  type: object
+                  properties:
+                    pitchPixelDistance: { type: number }
+                    pitchMeters: { type: number }
+                options:
+                  type: object
+              required: [frames, calibration]
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  speedKmh: { type: number, nullable: true }
+                  trajectory: { type: array, items: { type: object } }
+                  detections: { type: array, items: { type: object } }
+                  warnings: { type: array, items: { type: string } }
+        '400':
+          description: Invalid input
+        '501':
+          description: Not implemented

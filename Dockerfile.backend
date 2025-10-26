@@ -1,0 +1,33 @@
+# Backend Dockerfile (FastAPI)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy pyproject.toml
+COPY pyproject.toml ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -e ".[dev]"
+
+# Install FastAPI and Uvicorn
+RUN pip install --no-cache-dir fastapi uvicorn[standard]
+
+# Copy application code
+COPY python/ ./python/
+COPY ml/ ./ml/
+
+# Create backend entrypoint (if not exists)
+RUN mkdir -p backend
+
+EXPOSE 8000
+
+# Default command (override in docker-compose)
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
