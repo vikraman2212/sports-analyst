@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { CameraView } from '@/components/CameraView';
 import { SpeedDisplay } from '@/components/SpeedDisplay';
 import { createCricketPitchCalibration, createPitchCalibration } from '@/lib/calibration';
@@ -16,6 +17,15 @@ import { BallWeightSelector } from '@/components/BallWeightSelector';
 import { usePitchLength } from '@/hooks/usePitchLength';
 import { useBallWeight } from '@/hooks/useBallWeight';
 import type { DeliveryResult } from '@/lib/types';
+import type { ReplaySession } from '@/lib/replay/types';
+import { exportReplay } from '@/lib/export/replayExport';
+import type { ExportFormat } from '@/lib/replay/types';
+
+// Dynamically import TrajectoryReplay to avoid SSR issues with canvas
+const TrajectoryReplay = dynamic(() => import('@/components/TrajectoryReplay'), {
+  ssr: false,
+  loading: () => <div className="text-center py-8">Loading replay...</div>,
+});
 
 /**
  * Default calibration for prototype
@@ -25,6 +35,8 @@ const DEFAULT_PITCH_LENGTH_PIXELS = 512;
 
 export default function Home() {
   const [currentResult, setCurrentResult] = useState<DeliveryResult | null>(null);
+  const [replaySession, setReplaySession] = useState<ReplaySession | null>(null);
+  const [showReplay, setShowReplay] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { state: pitchState } = usePitchLength();
@@ -50,6 +62,22 @@ export default function Home() {
     setCurrentResult(result);
     setIsRecording(false);
     setError(null);
+
+    // Create replay session
+    const session: ReplaySession = {
+      id: `session-${Date.now()}`,
+      createdAt: new Date(),
+      delivery: result,
+      staticFrame: null, // Could capture a frame here in the future
+      durationMs: result.trajectoryPoints.length > 0
+        ? result.trajectoryPoints[result.trajectoryPoints.length - 1].timestampMs - result.trajectoryPoints[0].timestampMs
+        : 0,
+      startMs: result.trajectoryPoints.length > 0 ? result.trajectoryPoints[0].timestampMs : 0,
+      endMs: result.trajectoryPoints.length > 0
+        ? result.trajectoryPoints[result.trajectoryPoints.length - 1].timestampMs
+        : 0,
+    };
+    setReplaySession(session);
   }, []);
 
   /**
@@ -82,9 +110,36 @@ export default function Home() {
    */
   const handleReset = useCallback(() => {
     setCurrentResult(null);
+    setReplaySession(null);
+    setShowReplay(false);
     setIsRecording(false);
     setError(null);
   }, []);
+
+  /**
+   * Toggle replay view
+   */
+  const handleToggleReplay = useCallback(() => {
+    setShowReplay((prev) => !prev);
+  }, []);
+
+  /**
+   * Handle export
+   */
+  const handleExport = useCallback(async (format: ExportFormat) => {
+    if (!replaySession) return;
+
+    try {
+      await exportReplay(replaySession, {
+        format,
+        includeAnnotations: true,
+        filenamePrefix: 'cricket-delivery',
+      });
+    } catch (err) {
+      console.error('Export failed:', err);
+      setError(`Export failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  }, [replaySession]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -101,13 +156,24 @@ export default function Home() {
               </p>
             </div>
             {currentResult && (
-              <button
-                onClick={handleReset}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                aria-label="Reset and start new delivery"
-              >
-                New Delivery
-              </button>
+              <div className="flex gap-2">
+                {replaySession && (
+                  <button
+                    onClick={handleToggleReplay}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                    aria-label="Toggle replay view"
+                  >
+                    {showReplay ? '📊 Results' : '🎬 Replay'}
+                  </button>
+                )}
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                  aria-label="Reset and start new delivery"
+                >
+                  New Delivery
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -153,10 +219,52 @@ export default function Home() {
 
           {/* Results Section */}
           <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Analysis Results
-              </h2>
+            {showReplay && replaySession ? (
+              /* Replay View */
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Trajectory Replay
+                  </h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleExport('png')}
+                      className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                      title="Export as PNG"
+                    >
+                      📸 PNG
+                    </button>
+                    <button
+                      onClick={() => handleExport('webm')}
+                      className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                      title="Export as Video"
+                    >
+                      🎥 Video
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                      title="Export as JSON"
+                    >
+                      💾 JSON
+                    </button>
+                  </div>
+                </div>
+                <TrajectoryReplay
+                  session={replaySession}
+                  autoPlay={false}
+                  loop={false}
+                  speed={1.0}
+                  width={800}
+                  height={600}
+                />
+              </div>
+            ) : (
+              /* Results View */
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Analysis Results
+                </h2>
               
               {/* Error Message */}
               {error && (
@@ -184,7 +292,8 @@ export default function Home() {
                 pitchMeters={pitchState.meters}
                 pitchLabel={pitchLabel}
               />
-            </div>
+              </div>
+            )}
 
             {/* Calibration Info Card */}
             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">

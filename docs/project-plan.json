@@ -610,28 +610,217 @@
     {
       "id": "T5",
       "name": "Ball Tracking Replay",
-      "description": "Buffer frames with metadata and allow post-delivery replay with overlays and export.",
+      "description": "Trajectory-only replay with Hawk-Eye style visualization and top-down view. Zero video buffering for memory efficiency.",
       "start": "2025-11-11",
-      "durationDays": 7,
+      "durationDays": 5,
       "dependsOn": ["T3"],
-      "status": "planned",
+      "status": "in-planning",
       "owner": "frontend",
+      "epic": {
+        "id": "Epic 2",
+        "title": "Ball Tracking Recording & Replay User Flow",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/10",
+        "description": "Complete user flow from recording → analysis → replay → export with Hawk-Eye style visualization"
+      },
+      "implementation": {
+        "approach": "Trajectory-Only with Static Frame (Option 5 Enhanced)",
+        "decision": "After review on 2025-10-27, decided against video buffer (83MB memory) in favor of trajectory-only approach (~901KB). Provides Hawk-Eye/DRS style visualization familiar to cricket fans.",
+        "rationale": [
+          "Zero memory management risk (901KB vs 83MB)",
+          "Professional Hawk-Eye style matches cricket broadcast standards",
+          "Better for analysis (clear metrics: speed, bounce, line, length)",
+          "Faster implementation (5 days vs 7 days)",
+          "Works on ALL devices (no crash risk)",
+          "Easy export (generate video from trajectory animation)"
+        ],
+        "references": [
+          "docs/trajectory-only-replay-analysis.md - Detailed architecture analysis",
+          "docs/replay-trajectory-only-mockup.html - Interactive visual mockup",
+          "docs/TASK_5_DECISION.md - Final decision and implementation plan",
+          "https://github.com/vikraman2212/sports-analyst/issues/10 - Epic 2: User Flow (Mermaid diagram)"
+        ]
+      },
       "deliverables": [
-        "Ring buffer for recent frames + detections",
+        "Trajectory renderer with Hawk-Eye side view (default)",
+        "Top-down wagon wheel view",
         "Replay player UI with play/pause/seek",
-        "Overlay trajectory and speed indicators",
-        "Export JSON of replay data"
+        "Single static frame capture for context (~900KB)",
+        "Export as image (PNG) and animated video (WebM ~500KB)",
+        "Export JSON replay data"
       ],
       "acceptanceCriteria": [
-        "Replay matches live overlays within tolerance",
-        "Export opens correctly with current jsonExport util"
+        "Replay shows Hawk-Eye style side view with trajectory animation",
+        "Top-down view available via view switcher",
+        "Smooth 30fps playback with play/pause/seek controls",
+        "Export generates video file <1MB suitable for sharing",
+        "Total memory usage <5MB (trajectory + static frame)",
+        "Replay matches live overlays within tolerance"
       ],
       "likelyFiles": [
+        "frontend/src/lib/replay/trajectoryRenderer.ts",
+        "frontend/src/lib/replay/types.ts",
+        "frontend/src/components/TrajectoryReplay.tsx",
+        "frontend/src/hooks/useReplayPlayer.ts",
         "frontend/src/components/TrajectoryOverlay.tsx",
-        "frontend/src/components/CameraView.tsx",
-        "frontend/src/components/ReplayPlayer.tsx",
         "frontend/src/lib/export/jsonExport.ts",
-        "frontend/src/lib/detection/frameSampler.ts"
+        "frontend/src/lib/export/videoExport.ts"
+      ],
+      "visualMockup": "docs/replay-trajectory-only-mockup.html",
+      "userFlow": "https://github.com/vikraman2212/sports-analyst/issues/10"
+    },
+    {
+      "id": "T9",
+      "name": "Smart Trim - Auto-detect Recording Start/Stop",
+      "description": "Improve recording accuracy by automatically detecting when ball appears/disappears, eliminating user timing errors from manual buttons. Post-processes recorded frames to find first and last ball detection, then trims to relevant portion. Timeline shows full recording with highlighted relevant area.",
+      "start": "2025-11-13",
+      "durationDays": 1,
+      "dependsOn": ["T3", "T5"],
+      "status": "planned",
+      "owner": "frontend",
+      "epic": {
+        "id": "Epic 2",
+        "title": "Ball Tracking Recording & Replay User Flow",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/10",
+        "description": "Complete user flow from recording → analysis → replay → export with Hawk-Eye style visualization"
+      },
+      "implementation": {
+        "approach": "Smart Post-Processing Trim (Option 1)",
+        "workflow": [
+          "User presses START (manual)",
+          "System records frames continuously",
+          "User presses STOP (manual)",
+          "System analyzes all frames to find first/last ball detection",
+          "System trims recording to relevant portion",
+          "Timeline shows full recording with relevant portion highlighted"
+        ],
+        "rationale": [
+          "Simplest approach - 95% confidence",
+          "No runtime complexity - post-processing only",
+          "User sees full transparency (what was recorded vs. used)",
+          "Eliminates timing errors without complex auto-detection",
+          "5-hour implementation vs 8+ hours for auto-stop"
+        ],
+        "references": [
+          "https://github.com/vikraman2212/sports-analyst/issues/11",
+          "https://www.analyticsvidhya.com/blog/2020/03/ball-tracking-cricket-computer-vision/ (Automatic Target Aimer context)"
+        ]
+      },
+      "deliverables": [
+        "Smart trim algorithm finds first/last ball detection",
+        "Timeline UI shows full recording with relevant portion highlighted",
+        "Three-zone display: pre-ball (grey), ball-present (green/blue), post-ball (grey)",
+        "Export defaults to trimmed portion, option for full recording",
+        "Trim efficiency feedback (e.g., 'Used 70/120 frames (58%)')",
+        "Error handling: no ball detected, very short delivery (<10 frames)"
+      ],
+      "acceptanceCriteria": [
+        "Detects first ball appearance in recorded frames",
+        "Detects last ball appearance in recorded frames",
+        "Timeline displays full recording with relevant portion highlighted",
+        "User can scrub entire timeline including ignored portions",
+        "Export defaults to trimmed portion only",
+        "Clear feedback on trim efficiency",
+        "Trim analysis completes in <200ms for 120-frame recording"
+      ],
+      "likelyFiles": [
+        "frontend/src/lib/replay/smartTrim.ts",
+        "frontend/src/components/ReplayTimeline.tsx",
+        "frontend/src/lib/export/exportOptions.ts",
+        "frontend/src/tests/unit/smartTrim.unit.test.ts",
+        "frontend/src/tests/integration/smartTrimFlow.int.test.ts"
+      ],
+      "successMetrics": {
+        "confidence": "95%",
+        "implementationTime": "5 hours",
+        "userImpact": "Eliminates timing errors, improves data quality",
+        "memoryOverhead": "~200KB additional (detection metadata)"
+      }
+    },
+    {
+      "id": "T10",
+      "name": "Hybrid Auto-Stop - Detect Ball Exit Automatically",
+      "description": "Fully automate STOP button by detecting when ball disappears from frame for 30 consecutive frames. Manual START + automatic STOP workflow. Immediately triggers smart trim analysis.",
+      "start": "2025-11-20",
+      "durationDays": 2,
+      "dependsOn": ["T9"],
+      "status": "planned",
+      "owner": "frontend",
+      "epic": {
+        "id": "Epic 3",
+        "title": "Future Enhancements",
+        "url": "TBD",
+        "description": "Advanced automation features for future releases"
+      },
+      "implementation": {
+        "approach": "Hybrid Manual START + Auto-STOP",
+        "workflow": [
+          "User presses START (manual)",
+          "System records frames continuously",
+          "System detects ball absent for 30 consecutive frames",
+          "System automatically stops recording",
+          "System immediately runs smart trim (Task 9)",
+          "Results displayed instantly"
+        ],
+        "rationale": [
+          "Eliminates STOP button entirely",
+          "90% confidence (slightly more complex than smart trim)",
+          "Builds on Task 9 foundation",
+          "8-hour implementation",
+          "Future step toward fully automatic (Epic 4)"
+        ],
+        "references": [
+          "https://github.com/vikraman2212/sports-analyst/issues/12",
+          "Task 9 (Smart Trim) as prerequisite"
+        ]
+      },
+      "deliverables": [
+        "Auto-stop detection: 30 consecutive empty frames triggers stop",
+        "Countdown UI: 'Auto-stopping in N frames...' with progress ring",
+        "Manual STOP override always available",
+        "Configurable threshold: Quick (15 frames), Normal (30), Patient (60)",
+        "Safety timeout: 10s max recording prevents infinite loops",
+        "Minimum 10 frames before auto-stop can trigger",
+        "Automatic smart trim after auto-stop"
+      ],
+      "acceptanceCriteria": [
+        "Detects 30 consecutive frames without ball",
+        "Recording stops automatically when threshold reached",
+        "User can manually press STOP to override",
+        "Ball reappearing during countdown resets timer",
+        "Safety timeout prevents infinite recording (10s max)",
+        "Minimum 10 frames required before auto-stop",
+        "Auto-stop detection adds <5ms overhead per frame"
+      ],
+      "likelyFiles": [
+        "frontend/src/hooks/useAutoStop.ts",
+        "frontend/src/components/RecordingIndicator.tsx",
+        "frontend/src/components/AutoStopSettings.tsx",
+        "frontend/src/tests/unit/useAutoStop.unit.test.ts",
+        "frontend/src/tests/integration/autoStopFlow.int.test.ts"
+      ],
+      "successMetrics": {
+        "confidence": "90%",
+        "implementationTime": "8 hours",
+        "userImpact": "Eliminates STOP button, fully automated workflow",
+        "memoryOverhead": "~100KB additional (frame counters)",
+        "accuracy": "Triggers within 1s after ball exits 95% of the time"
+      },
+      "challenges": [
+        {
+          "challenge": "Ball disappears behind bowler mid-flight",
+          "mitigation": "Require CONSECUTIVE empty frames (30+)",
+          "confidence": "High"
+        },
+        {
+          "challenge": "Camera loses focus temporarily",
+          "mitigation": "minRecordingFrames=10 prevents early stop",
+          "confidence": "High"
+        },
+        {
+          "challenge": "Multiple deliveries in one session",
+          "mitigation": "maxRecordingSeconds=10s timeout",
+          "confidence": "Medium"
+        }
       ]
     },
     {

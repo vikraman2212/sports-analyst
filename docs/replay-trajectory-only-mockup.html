@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trajectory-Only Replay Mockup - Cricket Ball Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .mockup-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mockup-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.2);
+        }
+
+        .mockup-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            padding: 20px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .mockup-header h2 {
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            aspect-ratio: 16 / 9;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .stats-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 12, 41, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            min-width: 220px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            align-items: baseline;
+        }
+
+        .stat-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .controls {
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .control-group span {
+            color: #a0a0a0;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 70px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            box-shadow: none;
+        }
+
+        button.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        .description {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            padding: 28px;
+            border-radius: 12px;
+            margin-top: 40px;
+            border-left: 4px solid #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .description h3 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .description ul {
+            padding-left: 24px;
+            line-height: 1.9;
+        }
+
+        .description li {
+            margin-bottom: 12px;
+            color: #c0c0c0;
+        }
+
+        .description li strong {
+            color: #e0e0e0;
+            font-weight: 600;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pros, .cons {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            padding: 28px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pros {
+            border-left: 4px solid #10b981;
+        }
+
+        .cons {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .pros h3 {
+            color: #10b981;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .cons h3 {
+            color: #f59e0b;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .pros ul, .cons ul {
+            padding-left: 24px;
+            line-height: 1.9;
+        }
+
+        .pros li, .cons li {
+            margin-bottom: 12px;
+            color: #c0c0c0;
+        }
+
+        .pros li strong, .cons li strong {
+            color: #e0e0e0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏏 Trajectory-Only Replay Mockup</h1>
+        <p class="subtitle">Zero memory overhead, Hawk-Eye style visualization</p>
+
+        <div class="mockup-grid">
+            <!-- Style 1: Side View (Hawk-Eye) -->
+            <div class="mockup-card">
+                <div class="mockup-header">
+                    <h2>Style 1: Side View (Hawk-Eye Style)</h2>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="canvas1" width="800" height="450"></canvas>
+                    <div class="stats-overlay">
+                        <div class="stat-row">
+                            <span class="stat-label">Speed:</span>
+                            <span class="stat-value">142 km/h</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Length:</span>
+                            <span class="stat-value">6.2 m</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Bounce:</span>
+                            <span class="stat-value">Good</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <div class="control-group">
+                        <button onclick="animate1()">▶ Replay</button>
+                        <button class="secondary" onclick="resetCanvas1()">⟲ Reset</button>
+                    </div>
+                    <div class="control-group">
+                        <span>Progress:</span>
+                        <input type="range" id="slider1" min="0" max="100" value="0" oninput="seekCanvas1(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Style 2: Top-Down View -->
+            <div class="mockup-card">
+                <div class="mockup-header">
+                    <h2>Style 2: Top-Down View (Wagon Wheel)</h2>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="canvas2" width="800" height="450"></canvas>
+                    <div class="stats-overlay">
+                        <div class="stat-row">
+                            <span class="stat-label">Speed:</span>
+                            <span class="stat-value">142 km/h</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Line:</span>
+                            <span class="stat-value">Off stump</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Swing:</span>
+                            <span class="stat-value">12 cm</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <div class="control-group">
+                        <button onclick="animate2()">▶ Replay</button>
+                        <button class="secondary" onclick="resetCanvas2()">⟲ Reset</button>
+                    </div>
+                    <div class="control-group">
+                        <span>Progress:</span>
+                        <input type="range" id="slider2" min="0" max="100" value="0" oninput="seekCanvas2(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Style 3: 3D Isometric -->
+            <div class="mockup-card">
+                <div class="mockup-header">
+                    <h2>Style 3: 3D Isometric View</h2>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="canvas3" width="800" height="450"></canvas>
+                    <div class="stats-overlay">
+                        <div class="stat-row">
+                            <span class="stat-label">Speed:</span>
+                            <span class="stat-value">142 km/h</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Height:</span>
+                            <span class="stat-value">2.1 m</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Deviation:</span>
+                            <span class="stat-value">8 cm</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <div class="control-group">
+                        <button onclick="animate3()">▶ Replay</button>
+                        <button class="secondary" onclick="resetCanvas3()">⟲ Reset</button>
+                    </div>
+                    <div class="control-group">
+                        <span>Progress:</span>
+                        <input type="range" id="slider3" min="0" max="100" value="0" oninput="seekCanvas3(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Style 4: Camera View with Ghost Trail -->
+            <div class="mockup-card">
+                <div class="mockup-header">
+                    <h2>Style 4: Camera View + Ghost Trail</h2>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="canvas4" width="800" height="450"></canvas>
+                    <div class="stats-overlay">
+                        <div class="stat-row">
+                            <span class="stat-label">Speed:</span>
+                            <span class="stat-value">142 km/h</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Frames:</span>
+                            <span class="stat-value">28</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Confidence:</span>
+                            <span class="stat-value">94%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <div class="control-group">
+                        <button onclick="animate4()">▶ Replay</button>
+                        <button class="secondary" onclick="resetCanvas4()">⟲ Reset</button>
+                    </div>
+                    <div class="control-group">
+                        <span>Progress:</span>
+                        <input type="range" id="slider4" min="0" max="100" value="0" oninput="seekCanvas4(this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="description">
+            <h3>How Trajectory-Only Replay Works</h3>
+            <ul>
+                <li><strong>Zero Video Buffering:</strong> Only stores trajectory points (TrajectoryPoint[]) - typically 20-30 points × ~40 bytes = <1KB</li>
+                <li><strong>Optional Static Frame:</strong> Can capture one single frame at ball release for context (640×360 = ~900KB)</li>
+                <li><strong>Animated Visualization:</strong> Replay shows ball movement along trajectory path using canvas animation</li>
+                <li><strong>Multiple View Options:</strong> Side view (Hawk-Eye), top-down (wagon wheel), 3D isometric, or camera perspective</li>
+                <li><strong>Professional Look:</strong> Mimics TV broadcast graphics that cricket fans are familiar with</li>
+            </ul>
+        </div>
+
+        <div class="pros-cons">
+            <div class="pros">
+                <h3>✅ Advantages</h3>
+                <ul>
+                    <li><strong>Zero Memory Issues:</strong> ~1KB for trajectory + ~900KB for optional static frame</li>
+                    <li><strong>Professional Look:</strong> Hawk-Eye/DRS style visualization</li>
+                    <li><strong>Fast Export:</strong> JSON is tiny, can generate video from trajectory</li>
+                    <li><strong>Works Everywhere:</strong> No memory constraints, even on old phones</li>
+                    <li><strong>Analytical Focus:</strong> Shows path, speed zones, bounce point clearly</li>
+                    <li><strong>Easy Sharing:</strong> Can render to image/video for social media</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h3>⚠️ Trade-offs</h3>
+                <ul>
+                    <li><strong>No Bowler Action:</strong> Can't see delivery technique or follow-through</li>
+                    <li><strong>No Batsman Context:</strong> Can't see where batsman was, field placement</li>
+                    <li><strong>No Environmental Context:</strong> Miss lighting, pitch condition visuals</li>
+                    <li><strong>Expectation Gap:</strong> Users might expect full video replay</li>
+                    <li><strong>Less "Wow" Factor:</strong> Not as engaging as video replay initially</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="description" style="margin-top: 30px; border-left-color: #00ddff;">
+            <h3>💡 Hybrid Solution: Best of Both Worlds</h3>
+            <ul>
+                <li><strong>Default: Trajectory-Only</strong> for instant, memory-safe replay on all devices</li>
+                <li><strong>Optional: Video Buffer</strong> as opt-in feature for high-end devices (with memory check)</li>
+                <li><strong>Export Options:</strong> Always provide trajectory animation export, optionally include video if buffered</li>
+                <li><strong>Progressive Enhancement:</strong> Start with trajectory, add video if device capable</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Canvas 1: Side View (Hawk-Eye Style)
+        const canvas1 = document.getElementById('canvas1');
+        const ctx1 = canvas1.getContext('2d');
+        let anim1 = null;
+
+        // Trajectory data (simulated)
+        const trajectory = [
+            {x: 0.1, y: 0.65, z: 0.5},
+            {x: 0.2, y: 0.63, z: 0.48},
+            {x: 0.3, y: 0.59, z: 0.45},
+            {x: 0.4, y: 0.54, z: 0.40},
+            {x: 0.5, y: 0.48, z: 0.35},
+            {x: 0.6, y: 0.52, z: 0.30}, // Bounce
+            {x: 0.7, y: 0.58, z: 0.28},
+            {x: 0.8, y: 0.65, z: 0.27},
+            {x: 0.9, y: 0.72, z: 0.26},
+        ];
+
+        function drawPitch1() {
+            ctx1.fillStyle = '#0a4a0a';
+            ctx1.fillRect(0, canvas1.height * 0.75, canvas1.width, canvas1.height * 0.25);
+            
+            // Pitch lines
+            ctx1.strokeStyle = '#ffffff';
+            ctx1.lineWidth = 2;
+            ctx1.setLineDash([10, 5]);
+            ctx1.beginPath();
+            ctx1.moveTo(canvas1.width * 0.1, canvas1.height * 0.75);
+            ctx1.lineTo(canvas1.width * 0.9, canvas1.height * 0.75);
+            ctx1.stroke();
+            ctx1.setLineDash([]);
+
+            // Stumps
+            for (let i = 0; i < 3; i++) {
+                ctx1.fillStyle = '#ffdd00';
+                ctx1.fillRect(canvas1.width * 0.15 + i * 10, canvas1.height * 0.65, 6, 40);
+            }
+            for (let i = 0; i < 3; i++) {
+                ctx1.fillStyle = '#ffdd00';
+                ctx1.fillRect(canvas1.width * 0.85 + i * 10, canvas1.height * 0.65, 6, 40);
+            }
+
+            // Grid
+            ctx1.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx1.lineWidth = 1;
+            for (let i = 0; i < 10; i++) {
+                ctx1.beginPath();
+                ctx1.moveTo(0, canvas1.height * i / 10);
+                ctx1.lineTo(canvas1.width, canvas1.height * i / 10);
+                ctx1.stroke();
+                
+                ctx1.beginPath();
+                ctx1.moveTo(canvas1.width * i / 10, 0);
+                ctx1.lineTo(canvas1.width * i / 10, canvas1.height);
+                ctx1.stroke();
+            }
+        }
+
+        function drawTrajectory1(progress) {
+            const points = trajectory.length;
+            const visiblePoints = Math.floor(points * progress);
+
+            // Draw full path (faded)
+            ctx1.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+            ctx1.lineWidth = 3;
+            ctx1.beginPath();
+            trajectory.forEach((p, i) => {
+                const x = canvas1.width * p.x;
+                const y = canvas1.height * p.y;
+                if (i === 0) ctx1.moveTo(x, y);
+                else ctx1.lineTo(x, y);
+            });
+            ctx1.stroke();
+
+            // Draw revealed path (bright)
+            ctx1.strokeStyle = '#667eea';
+            ctx1.lineWidth = 5;
+            ctx1.shadowBlur = 15;
+            ctx1.shadowColor = '#667eea';
+            ctx1.beginPath();
+            for (let i = 0; i <= visiblePoints && i < trajectory.length; i++) {
+                const p = trajectory[i];
+                const x = canvas1.width * p.x;
+                const y = canvas1.height * p.y;
+                if (i === 0) ctx1.moveTo(x, y);
+                else ctx1.lineTo(x, y);
+            }
+            ctx1.stroke();
+            ctx1.shadowBlur = 0;
+
+            // Draw ball position
+            if (visiblePoints > 0 && visiblePoints < trajectory.length) {
+                const p = trajectory[visiblePoints];
+                const x = canvas1.width * p.x;
+                const y = canvas1.height * p.y;
+                
+                // Glow effect
+                const gradient = ctx1.createRadialGradient(x, y, 5, x, y, 20);
+                gradient.addColorStop(0, '#f87171');
+                gradient.addColorStop(0.5, '#ff8800');
+                gradient.addColorStop(1, 'rgba(255, 136, 0, 0)');
+                ctx1.fillStyle = gradient;
+                ctx1.beginPath();
+                ctx1.arc(x, y, 20, 0, Math.PI * 2);
+                ctx1.fill();
+
+                // Ball
+                ctx1.fillStyle = '#f87171';
+                ctx1.beginPath();
+                ctx1.arc(x, y, 8, 0, Math.PI * 2);
+                ctx1.fill();
+                
+                ctx1.strokeStyle = '#ffffff';
+                ctx1.lineWidth = 2;
+                ctx1.stroke();
+            }
+
+            // Draw bounce point
+            const bouncePoint = trajectory[5];
+            ctx1.fillStyle = 'rgba(251, 191, 36, 0.4)';
+            ctx1.beginPath();
+            ctx1.arc(canvas1.width * bouncePoint.x, canvas1.height * 0.75, 30, 0, Math.PI * 2);
+            ctx1.fill();
+            ctx1.strokeStyle = '#fbbf24';
+            ctx1.lineWidth = 2;
+            ctx1.stroke();
+        }
+
+        function resetCanvas1() {
+            cancelAnimationFrame(anim1);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            drawPitch1();
+            drawTrajectory1(0);
+            document.getElementById('slider1').value = 0;
+        }
+
+        function seekCanvas1(value) {
+            const progress = value / 100;
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            drawPitch1();
+            drawTrajectory1(progress);
+        }
+
+        function animate1() {
+            let progress = 0;
+            function frame() {
+                progress += 0.01;
+                if (progress > 1) progress = 0;
+                
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                drawPitch1();
+                drawTrajectory1(progress);
+                document.getElementById('slider1').value = progress * 100;
+                
+                anim1 = requestAnimationFrame(frame);
+            }
+            cancelAnimationFrame(anim1);
+            frame();
+        }
+
+        // Canvas 2: Top-Down View
+        const canvas2 = document.getElementById('canvas2');
+        const ctx2 = canvas2.getContext('2d');
+        let anim2 = null;
+
+        const trajectoryTopDown = [
+            {x: 0.5, y: 0.1},
+            {x: 0.52, y: 0.2},
+            {x: 0.54, y: 0.3},
+            {x: 0.55, y: 0.4},
+            {x: 0.56, y: 0.5},
+            {x: 0.57, y: 0.6},
+            {x: 0.56, y: 0.7},
+            {x: 0.55, y: 0.8},
+            {x: 0.54, y: 0.9},
+        ];
+
+        function drawPitch2() {
+            // Pitch rectangle
+            ctx2.fillStyle = '#0a4a0a';
+            ctx2.fillRect(canvas2.width * 0.2, canvas2.height * 0.05, canvas2.width * 0.6, canvas2.height * 0.9);
+            
+            // Pitch center line
+            ctx2.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx2.lineWidth = 2;
+            ctx2.setLineDash([10, 5]);
+            ctx2.beginPath();
+            ctx2.moveTo(canvas2.width * 0.5, canvas2.height * 0.05);
+            ctx2.lineTo(canvas2.width * 0.5, canvas2.height * 0.95);
+            ctx2.stroke();
+            ctx2.setLineDash([]);
+
+            // Stumps (circles for top-down)
+            ctx2.fillStyle = '#ffdd00';
+            ctx2.beginPath();
+            ctx2.arc(canvas2.width * 0.5, canvas2.height * 0.1, 8, 0, Math.PI * 2);
+            ctx2.fill();
+            
+            ctx2.beginPath();
+            ctx2.arc(canvas2.width * 0.5, canvas2.height * 0.9, 8, 0, Math.PI * 2);
+            ctx2.fill();
+
+            // Off stump line
+            ctx2.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx2.lineWidth = 2;
+            ctx2.beginPath();
+            ctx2.moveTo(canvas2.width * 0.54, canvas2.height * 0.85);
+            ctx2.lineTo(canvas2.width * 0.54, canvas2.height * 0.95);
+            ctx2.stroke();
+
+            // Leg stump line
+            ctx2.strokeStyle = 'rgba(0, 100, 255, 0.5)';
+            ctx2.beginPath();
+            ctx2.moveTo(canvas2.width * 0.46, canvas2.height * 0.85);
+            ctx2.lineTo(canvas2.width * 0.46, canvas2.height * 0.95);
+            ctx2.stroke();
+        }
+
+        function drawTrajectory2(progress) {
+            const points = trajectoryTopDown.length;
+            const visiblePoints = Math.floor(points * progress);
+
+            // Full path
+            ctx2.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+            ctx2.lineWidth = 3;
+            ctx2.beginPath();
+            trajectoryTopDown.forEach((p, i) => {
+                const x = canvas2.width * p.x;
+                const y = canvas2.height * p.y;
+                if (i === 0) ctx2.moveTo(x, y);
+                else ctx2.lineTo(x, y);
+            });
+            ctx2.stroke();
+
+            // Revealed path
+            ctx2.strokeStyle = '#667eea';
+            ctx2.lineWidth = 5;
+            ctx2.shadowBlur = 15;
+            ctx2.shadowColor = '#667eea';
+            ctx2.beginPath();
+            for (let i = 0; i <= visiblePoints && i < trajectoryTopDown.length; i++) {
+                const p = trajectoryTopDown[i];
+                const x = canvas2.width * p.x;
+                const y = canvas2.height * p.y;
+                if (i === 0) ctx2.moveTo(x, y);
+                else ctx2.lineTo(x, y);
+            }
+            ctx2.stroke();
+            ctx2.shadowBlur = 0;
+
+            // Ball
+            if (visiblePoints > 0 && visiblePoints < trajectoryTopDown.length) {
+                const p = trajectoryTopDown[visiblePoints];
+                const x = canvas2.width * p.x;
+                const y = canvas2.height * p.y;
+                
+                const gradient = ctx2.createRadialGradient(x, y, 5, x, y, 20);
+                gradient.addColorStop(0, '#f87171');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                ctx2.fillStyle = gradient;
+                ctx2.beginPath();
+                ctx2.arc(x, y, 20, 0, Math.PI * 2);
+                ctx2.fill();
+
+                ctx2.fillStyle = '#f87171';
+                ctx2.beginPath();
+                ctx2.arc(x, y, 8, 0, Math.PI * 2);
+                ctx2.fill();
+            }
+        }
+
+        function resetCanvas2() {
+            cancelAnimationFrame(anim2);
+            ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+            drawPitch2();
+            drawTrajectory2(0);
+            document.getElementById('slider2').value = 0;
+        }
+
+        function seekCanvas2(value) {
+            const progress = value / 100;
+            ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+            drawPitch2();
+            drawTrajectory2(progress);
+        }
+
+        function animate2() {
+            let progress = 0;
+            function frame() {
+                progress += 0.01;
+                if (progress > 1) progress = 0;
+                
+                ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+                drawPitch2();
+                drawTrajectory2(progress);
+                document.getElementById('slider2').value = progress * 100;
+                
+                anim2 = requestAnimationFrame(frame);
+            }
+            cancelAnimationFrame(anim2);
+            frame();
+        }
+
+        // Canvas 3: 3D Isometric
+        const canvas3 = document.getElementById('canvas3');
+        const ctx3 = canvas3.getContext('2d');
+        let anim3 = null;
+
+        function project3D(x, y, z) {
+            // Simple isometric projection
+            const iso = {
+                x: canvas3.width * 0.5 + (x - z) * 200,
+                y: canvas3.height * 0.7 - y * 200 - (x + z) * 100
+            };
+            return iso;
+        }
+
+        function drawPitch3() {
+            // Draw pitch grid in isometric
+            ctx3.strokeStyle = 'rgba(102, 126, 234, 0.2)';
+            ctx3.lineWidth = 1;
+            
+            for (let i = 0; i <= 10; i++) {
+                const start = project3D(0, 0, i * 0.1);
+                const end = project3D(1, 0, i * 0.1);
+                ctx3.beginPath();
+                ctx3.moveTo(start.x, start.y);
+                ctx3.lineTo(end.x, end.y);
+                ctx3.stroke();
+            }
+            
+            for (let i = 0; i <= 10; i++) {
+                const start = project3D(i * 0.1, 0, 0);
+                const end = project3D(i * 0.1, 0, 1);
+                ctx3.beginPath();
+                ctx3.moveTo(start.x, start.y);
+                ctx3.lineTo(end.x, end.y);
+                ctx3.stroke();
+            }
+        }
+
+        function drawTrajectory3(progress) {
+            const points = trajectory.length;
+            const visiblePoints = Math.floor(points * progress);
+
+            // Full path
+            ctx3.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+            ctx3.lineWidth = 3;
+            ctx3.beginPath();
+            trajectory.forEach((p, i) => {
+                const pos = project3D(p.x, 1 - p.y, p.z);
+                if (i === 0) ctx3.moveTo(pos.x, pos.y);
+                else ctx3.lineTo(pos.x, pos.y);
+            });
+            ctx3.stroke();
+
+            // Revealed path
+            ctx3.strokeStyle = '#667eea';
+            ctx3.lineWidth = 5;
+            ctx3.shadowBlur = 15;
+            ctx3.shadowColor = '#667eea';
+            ctx3.beginPath();
+            for (let i = 0; i <= visiblePoints && i < trajectory.length; i++) {
+                const p = trajectory[i];
+                const pos = project3D(p.x, 1 - p.y, p.z);
+                if (i === 0) ctx3.moveTo(pos.x, pos.y);
+                else ctx3.lineTo(pos.x, pos.y);
+            }
+            ctx3.stroke();
+            ctx3.shadowBlur = 0;
+
+            // Ball
+            if (visiblePoints > 0 && visiblePoints < trajectory.length) {
+                const p = trajectory[visiblePoints];
+                const pos = project3D(p.x, 1 - p.y, p.z);
+                
+                const gradient = ctx3.createRadialGradient(pos.x, pos.y, 5, pos.x, pos.y, 20);
+                gradient.addColorStop(0, '#f87171');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                ctx3.fillStyle = gradient;
+                ctx3.beginPath();
+                ctx3.arc(pos.x, pos.y, 20, 0, Math.PI * 2);
+                ctx3.fill();
+
+                ctx3.fillStyle = '#f87171';
+                ctx3.beginPath();
+                ctx3.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
+                ctx3.fill();
+            }
+        }
+
+        function resetCanvas3() {
+            cancelAnimationFrame(anim3);
+            ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+            drawPitch3();
+            drawTrajectory3(0);
+            document.getElementById('slider3').value = 0;
+        }
+
+        function seekCanvas3(value) {
+            const progress = value / 100;
+            ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+            drawPitch3();
+            drawTrajectory3(progress);
+        }
+
+        function animate3() {
+            let progress = 0;
+            function frame() {
+                progress += 0.01;
+                if (progress > 1) progress = 0;
+                
+                ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+                drawPitch3();
+                drawTrajectory3(progress);
+                document.getElementById('slider3').value = progress * 100;
+                
+                anim3 = requestAnimationFrame(frame);
+            }
+            cancelAnimationFrame(anim3);
+            frame();
+        }
+
+        // Canvas 4: Camera View with Ghost Trail
+        const canvas4 = document.getElementById('canvas4');
+        const ctx4 = canvas4.getContext('2d');
+        let anim4 = null;
+
+        const cameraTrajectory = [
+            {x: 0.35, y: 0.4},
+            {x: 0.38, y: 0.38},
+            {x: 0.42, y: 0.35},
+            {x: 0.47, y: 0.32},
+            {x: 0.52, y: 0.30},
+            {x: 0.57, y: 0.32},
+            {x: 0.62, y: 0.35},
+            {x: 0.66, y: 0.39},
+            {x: 0.69, y: 0.44},
+        ];
+
+        function drawCameraView4() {
+            // Simulate camera view background (gradient for depth)
+            const gradient = ctx4.createLinearGradient(0, 0, 0, canvas4.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#0a0a0a');
+            ctx4.fillStyle = gradient;
+            ctx4.fillRect(0, 0, canvas4.width, canvas4.height);
+
+            // Draw pitch lines
+            ctx4.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx4.lineWidth = 3;
+            ctx4.setLineDash([15, 10]);
+            ctx4.beginPath();
+            ctx4.moveTo(canvas4.width * 0.2, canvas4.height * 0.6);
+            ctx4.lineTo(canvas4.width * 0.8, canvas4.height * 0.6);
+            ctx4.stroke();
+            ctx4.setLineDash([]);
+
+            // Speed zones overlay
+            ctx4.fillStyle = 'rgba(255, 0, 0, 0.1)';
+            ctx4.fillRect(0, canvas4.height * 0.2, canvas4.width * 0.4, canvas4.height * 0.2);
+            ctx4.fillStyle = 'rgba(255, 255, 0, 0.1)';
+            ctx4.fillRect(canvas4.width * 0.4, canvas4.height * 0.2, canvas4.width * 0.3, canvas4.height * 0.2);
+            ctx4.fillStyle = 'rgba(0, 255, 0, 0.1)';
+            ctx4.fillRect(canvas4.width * 0.7, canvas4.height * 0.2, canvas4.width * 0.3, canvas4.height * 0.2);
+        }
+
+        function drawTrajectory4(progress) {
+            const points = cameraTrajectory.length;
+            const visiblePoints = Math.floor(points * progress);
+
+            // Ghost trail (all previous positions with fade)
+            for (let i = 0; i < visiblePoints; i++) {
+                const p = cameraTrajectory[i];
+                const alpha = (i + 1) / visiblePoints * 0.5;
+                const size = 6 + (i + 1) / visiblePoints * 6;
+                
+                ctx4.fillStyle = `rgba(102, 126, 234, ${alpha})`;
+                ctx4.beginPath();
+                ctx4.arc(canvas4.width * p.x, canvas4.height * p.y, size, 0, Math.PI * 2);
+                ctx4.fill();
+            }
+
+            // Connecting line
+            ctx4.strokeStyle = 'rgba(102, 126, 234, 0.5)';
+            ctx4.lineWidth = 3;
+            ctx4.beginPath();
+            for (let i = 0; i <= visiblePoints && i < cameraTrajectory.length; i++) {
+                const p = cameraTrajectory[i];
+                const x = canvas4.width * p.x;
+                const y = canvas4.height * p.y;
+                if (i === 0) ctx4.moveTo(x, y);
+                else ctx4.lineTo(x, y);
+            }
+            ctx4.stroke();
+
+            // Current ball position
+            if (visiblePoints > 0 && visiblePoints < cameraTrajectory.length) {
+                const p = cameraTrajectory[visiblePoints];
+                const x = canvas4.width * p.x;
+                const y = canvas4.height * p.y;
+                
+                // Glow
+                const gradient = ctx4.createRadialGradient(x, y, 5, x, y, 30);
+                gradient.addColorStop(0, '#f87171');
+                gradient.addColorStop(0.5, '#ff8800');
+                gradient.addColorStop(1, 'rgba(255, 136, 0, 0)');
+                ctx4.fillStyle = gradient;
+                ctx4.beginPath();
+                ctx4.arc(x, y, 30, 0, Math.PI * 2);
+                ctx4.fill();
+
+                // Ball
+                ctx4.fillStyle = '#f87171';
+                ctx4.beginPath();
+                ctx4.arc(x, y, 12, 0, Math.PI * 2);
+                ctx4.fill();
+                ctx4.strokeStyle = '#ffffff';
+                ctx4.lineWidth = 3;
+                ctx4.stroke();
+
+                // Speed indicator
+                const speed = 120 + Math.random() * 40;
+                ctx4.fillStyle = '#667eea';
+                ctx4.font = 'bold 20px sans-serif';
+                ctx4.fillText(`${speed.toFixed(0)} km/h`, x + 20, y - 20);
+            }
+        }
+
+        function resetCanvas4() {
+            cancelAnimationFrame(anim4);
+            ctx4.clearRect(0, 0, canvas4.width, canvas4.height);
+            drawCameraView4();
+            drawTrajectory4(0);
+            document.getElementById('slider4').value = 0;
+        }
+
+        function seekCanvas4(value) {
+            const progress = value / 100;
+            ctx4.clearRect(0, 0, canvas4.width, canvas4.height);
+            drawCameraView4();
+            drawTrajectory4(progress);
+        }
+
+        function animate4() {
+            let progress = 0;
+            function frame() {
+                progress += 0.01;
+                if (progress > 1) progress = 0;
+                
+                ctx4.clearRect(0, 0, canvas4.width, canvas4.height);
+                drawCameraView4();
+                drawTrajectory4(progress);
+                document.getElementById('slider4').value = progress * 100;
+                
+                anim4 = requestAnimationFrame(frame);
+            }
+            cancelAnimationFrame(anim4);
+            frame();
+        }
+
+        // Initialize all canvases
+        resetCanvas1();
+        resetCanvas2();
+        resetCanvas3();
+        resetCanvas4();
+    </script>
+</body>
+</html>
