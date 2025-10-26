@@ -12,30 +12,39 @@ import type { FrameSample, CalibrationProfile } from '@/lib/types';
 describe('Calibration Required Error Handling', () => {
   let mockFrames: FrameSample[];
 
+  function createNonBlankImageData(width: number, height: number): ImageData {
+    const img = new ImageData(width, height);
+    const data = (img as unknown as { data?: Uint8ClampedArray }).data;
+    if (data) {
+      for (let i = 0; i < Math.min(200, data.length); i += 4) {
+        data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
+      }
+    }
+    return img;
+  }
+
   beforeEach(() => {
     mockFrames = Array.from({ length: 30 }, (_, i) => ({
       frameIndex: i,
       timestampMs: i * 33,
-      imageData: new ImageData(640, 480),
+      imageData: createNonBlankImageData(640, 480),
     }));
   });
 
   describe('Missing calibration', () => {
     it('should reject when calibration is null', async () => {
       const { analyzeDelivery } = await import('@/lib/analyzeDelivery');
-      
-      // @ts-expect-error - Testing invalid input
+
       await expect(
-        analyzeDelivery(mockFrames, null)
+        analyzeDelivery(mockFrames, null as unknown as CalibrationProfile)
       ).rejects.toThrow(/calibration|required|missing/i);
     });
 
     it('should reject when calibration is undefined', async () => {
       const { analyzeDelivery } = await import('@/lib/analyzeDelivery');
-      
-      // @ts-expect-error - Testing invalid input
+
       await expect(
-        analyzeDelivery(mockFrames, undefined)
+        analyzeDelivery(mockFrames, undefined as unknown as CalibrationProfile)
       ).rejects.toThrow(/calibration|required|missing/i);
     });
   });
@@ -48,6 +57,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 0, // Invalid
         referenceDistanceMeters: 20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       await expect(
@@ -62,6 +72,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: -100,
         referenceDistanceMeters: 20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       await expect(
@@ -76,6 +87,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 500,
         referenceDistanceMeters: 0,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       await expect(
@@ -90,6 +102,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 500,
         referenceDistanceMeters: -20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       await expect(
@@ -104,6 +117,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 500,
         referenceDistanceMeters: 100, // Way too long for cricket pitch
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       await expect(
@@ -159,6 +173,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: -50,
         referenceDistanceMeters: 20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       try {
@@ -213,6 +228,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 500,
         referenceDistanceMeters: 20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       expect(isValidCalibration(validCalibration)).toBe(true);
@@ -225,6 +241,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 0,
         referenceDistanceMeters: 20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       expect(isValidCalibration(invalidCalibration)).toBe(false);
@@ -233,7 +250,7 @@ describe('Calibration Required Error Handling', () => {
     it('should reject null calibration as invalid', async () => {
       const { isValidCalibration } = await import('@/lib/calibration');
       
-      expect(isValidCalibration(null as any)).toBe(false);
+  expect(isValidCalibration(null as unknown as CalibrationProfile)).toBe(false);
     });
   });
 
@@ -245,6 +262,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 500,
         referenceDistanceMeters: 20.12, // Exactly 22 yards
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       // Should not throw calibration error (may throw other errors due to mock data)
@@ -260,6 +278,7 @@ describe('Calibration Required Error Handling', () => {
         pitchLengthPixels: 750, // Different resolution
         referenceDistanceMeters: 20.12,
         homographyMatrix: null,
+        ballMassGrams: 156,
       };
       
       const result = await analyzeDelivery(mockFrames, variationCalibration);

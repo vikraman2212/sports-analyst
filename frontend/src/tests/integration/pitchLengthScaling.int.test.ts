@@ -4,6 +4,17 @@
 
 import type { FrameSample, CalibrationProfile } from '@/lib/types';
 
+function createNonBlankImageData(width: number, height: number): ImageData {
+  const img = new ImageData(width, height);
+  const data = (img as unknown as { data?: Uint8ClampedArray }).data;
+  if (data) {
+    for (let i = 0; i < Math.min(200, data.length); i += 4) {
+      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
+    }
+  }
+  return img;
+}
+
 describe('Integration: pitch length scaling', () => {
   let frames: FrameSample[];
 
@@ -12,7 +23,7 @@ describe('Integration: pitch length scaling', () => {
     frames = Array.from({ length: 30 }, (_, i) => ({
       frameIndex: i,
       timestampMs: i * 33,
-      imageData: new ImageData(640, 480),
+      imageData: createNonBlankImageData(640, 480),
     }));
   });
 
@@ -25,12 +36,14 @@ describe('Integration: pitch length scaling', () => {
       pitchLengthPixels,
       referenceDistanceMeters: 20.12,
       homographyMatrix: null,
+      ballMassGrams: 156,
     };
 
     const calibYouth: CalibrationProfile = {
       pitchLengthPixels,
       referenceDistanceMeters: 16.0,
       homographyMatrix: null,
+      ballMassGrams: 156,
     };
 
     const resultStandard = await analyzeDelivery(frames, calibStandard);

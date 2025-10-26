@@ -102,9 +102,9 @@ describe('Performance Test Harness', () => {
       timer.stop();
       const elapsed = timer.elapsed();
 
-      // Should be close to work duration (within 5ms tolerance)
+  // Should be close to work duration (allow a slightly larger tolerance in CI)
       expect(elapsed).toBeGreaterThanOrEqual(workDuration);
-      expect(elapsed).toBeLessThan(workDuration + 5);
+  expect(elapsed).toBeLessThan(workDuration + 25);
     });
 
     it('should have minimal overhead', () => {

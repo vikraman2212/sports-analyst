@@ -359,7 +359,8 @@ describe('Home Page', () => {
     it('should create default calibration with correct pitch length', () => {
       render(<Home />);
 
-      expect(createCricketPitchCalibration).toHaveBeenCalledWith(512);
+      // The calibration factory now accepts (pitchLengthPixels, ballMassGrams)
+      expect(createCricketPitchCalibration).toHaveBeenCalledWith(512, 156);
     });
 
     it('should display calibration settings', () => {

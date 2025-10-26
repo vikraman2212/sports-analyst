@@ -13,6 +13,16 @@ describe('Ball Weight Integration Test', () => {
     canvas.height = 480;
     const ctx = canvas.getContext('2d')!;
     const imageData = ctx.createImageData(640, 480);
+    // Fill a few pixels so frames are non-blank for MockDetector
+    const data = (imageData as unknown as { data?: Uint8ClampedArray }).data;
+    if (data) {
+      for (let i = 0; i < Math.min(200, data.length); i += 4) {
+        data[i] = 255; // R
+        data[i + 1] = 255; // G
+        data[i + 2] = 255; // B
+        data[i + 3] = 255; // A
+      }
+    }
     
     return {
       frameIndex,

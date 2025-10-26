@@ -15,8 +15,9 @@ gantt
     excludes weekends
 
     section Configuration
-    Configurable Pitch Length (T1)     :t1, 2025-10-27, 3d
-    Configurable Ball Weight (T2)      :t2, 2025-10-27, 3d
+    Configurable Pitch Length (T1)     :done, t1, 2025-10-27, 3d
+    Configurable Ball Weight (T2)      :done, t2, 2025-10-27, 1d
+    Mobile Testing via ngrok (T7)      :t7, 2025-10-27, 1d
 
     section Detection
     Migrate to YOLOv8 (T3)             :t3, 2025-10-30, 10d
@@ -28,6 +29,7 @@ gantt
     Ball Tracking Replay (T5)          :t5, after t3, 7d
 
     section Hardening
+    Stabilize Failing Tests (T8)       :done, t8, 2025-10-26, 1d
     Docs & Tests (T6)                  :t6, after t1 t2 t3 t4 t5, 4d
 ```
 

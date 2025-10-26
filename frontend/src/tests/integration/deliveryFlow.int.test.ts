@@ -9,6 +9,17 @@
 
 import type { FrameSample, CalibrationProfile } from '../../lib/types';
 
+function createNonBlankImageData(width: number, height: number): ImageData {
+  const img = new ImageData(width, height);
+  const data = (img as unknown as { data?: Uint8ClampedArray }).data;
+  if (data) {
+    for (let i = 0; i < Math.min(200, data.length); i += 4) {
+      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
+    }
+  }
+  return img;
+}
+
 describe('Delivery Flow Integration', () => {
   let mockFrames: FrameSample[];
   let mockCalibration: CalibrationProfile;
@@ -18,7 +29,7 @@ describe('Delivery Flow Integration', () => {
     mockFrames = Array.from({ length: 30 }, (_, i) => ({
       frameIndex: i,
       timestampMs: i * 33, // ~30fps
-      imageData: new ImageData(640, 480),
+      imageData: createNonBlankImageData(640, 480),
     }));
 
     // Mock calibration for 22-yard pitch
@@ -26,6 +37,7 @@ describe('Delivery Flow Integration', () => {
       pitchLengthPixels: 500,
       referenceDistanceMeters: 20.12, // 22 yards
       homographyMatrix: null,
+      ballMassGrams: 156,
     };
   });
 
