@@ -7,10 +7,13 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
-import type { ReplaySession, ViewMode, AnnotationConfig } from '../lib/replay/types';
+import { useEffect, useRef, useMemo } from 'react';
+import type { ReplaySession, ViewMode, AnnotationConfig, TrimResult } from '../lib/replay/types';
+import type { TrajectoryPoint } from '../lib/types';
 import { TrajectoryRenderer } from '../lib/replay/trajectoryRenderer';
 import { useReplayPlayer } from '../hooks/useReplayPlayer';
+import { smartTrim } from '../lib/replay/smartTrim';
+import ReplayTimeline from './ReplayTimeline';
 
 export interface TrajectoryReplayProps {
   /** Replay session data */
@@ -79,6 +82,34 @@ export default function TrajectoryReplay({
     loop,
     speed,
   });
+
+  // Calculate trim result from trajectory
+  const trimResult = useMemo<TrimResult | null>(() => {
+    try {
+      // Convert trajectory to (Point | null)[] array for smartTrim
+      const trajectoryPoints: (TrajectoryPoint | null)[] = session.delivery.trajectoryPoints.map(p => p);
+      return smartTrim(trajectoryPoints);
+    } catch (error) {
+      console.warn('Smart trim failed:', error);
+      return null;
+    }
+  }, [session]);
+
+  // Current frame for timeline (estimate from time)
+  const currentFrame = useMemo(() => {
+    if (!session.delivery.trajectoryPoints.length) return 0;
+    const progress = player.progress;
+    return Math.round(progress * (session.delivery.trajectoryPoints.length - 1));
+  }, [player.progress, session.delivery.trajectoryPoints.length]);
+
+  // Handle seek from timeline
+  const handleTimelineSeek = (frameIndex: number) => {
+    const totalFrames = session.delivery.trajectoryPoints.length;
+    if (totalFrames === 0) return;
+
+    const progress = frameIndex / (totalFrames - 1);
+    player.seekToProgress(progress);
+  };
 
   /**
    * Initialize renderer
@@ -246,6 +277,18 @@ export default function TrajectoryReplay({
 
           <span className="time-display">{formatTime(player.duration)}</span>
         </div>
+
+        {/* Timeline with smart trim visualization */}
+        {trimResult && (
+          <ReplayTimeline
+            totalFrames={session.delivery.trajectoryPoints.length}
+            currentFrame={currentFrame}
+            trimResult={trimResult}
+            onSeek={handleTimelineSeek}
+            showFrameNumbers={true}
+            showStats={true}
+          />
+        )}
 
         {/* Additional controls */}
         <div className="additional-controls">
