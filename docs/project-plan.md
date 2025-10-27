@@ -7,19 +7,23 @@ This document includes a canonical JSON plan and a visual Gantt chart for the cr
 ### Epic 2: Ball Tracking Recording & Replay User Flow
 
 - **GitHub Issue:** [#10](https://github.com/vikraman2212/sports-analyst/issues/10)
-- **Status:** In Planning
+- **Status:** ✅ Complete (T5, T9 finished)
 - **Scope:** Complete user flow from camera setup → recording → analysis → replay → export
-- **Related Tasks:** T5 (Ball Tracking Replay), T9 (Smart Trim)
+- **Related Tasks:** ✅ T5 (Ball Tracking Replay), ✅ T9 (Smart Trim)
 - **Key Deliverables:**
-  - Mermaid user flow diagram (recording states, decision points, error handling)
-  - Hawk-Eye style trajectory replay visualization
-  - Smart trim: auto-detect ball appearance/disappearance
-  - Timeline UI showing full recording with relevant portion highlighted
-  - Export options (screenshot, video, JSON)
+  - ✅ Mermaid user flow diagram (recording states, decision points, error handling)
+  - ✅ Hawk-Eye style trajectory replay visualization
+  - ✅ Smart trim: auto-detect ball appearance/disappearance
+  - ✅ Timeline UI showing full recording with relevant portion highlighted
+  - ✅ Export options (screenshot, video, JSON)
 - **Documentation:**
   - `docs/trajectory-only-replay-analysis.md` - Architecture analysis
   - `docs/replay-trajectory-only-mockup.html` - Interactive visual mockup
   - `docs/TASK_5_DECISION.md` - Final decision and implementation plan
+- **Completion:**
+  - T5 completed 2025-10-27 (commit 00bd8e3)
+  - T9 completed 2025-10-27 (commit a599490)
+  - All acceptance criteria met, 541/541 tests passing
 
 ### Epic 3: Future Enhancements
 
@@ -63,8 +67,8 @@ gantt
     Camera Settings Guidance (T4)      :done, t4, 2025-10-26, 1d
 
     section Replay [Epic 2]
-    Ball Tracking Replay (T5)          :t5, after t3, 5d
-    Smart Trim (T9) [Epic 2]           :t9, after t5, 1d
+    Ball Tracking Replay (T5)          :done, t5, 2025-10-27, 1d
+    Smart Trim (T9) [Epic 2]           :done, t9, 2025-10-27, 1d
 
     section Future [Epic 3]
     Hybrid Auto-Stop (T10) [Epic 3]    :t10, after t9, 2d
@@ -76,13 +80,13 @@ gantt
 
 ## Notes
 
-- Start date: 2025-10-27. Target completion: 2025-11-21 (Epic 2) / 2025-11-24 (Epic 3)
-- **Completed:** T1 (Pitch Length), T2 (Ball Weight), T4 (Camera Diagnostics), T8 (Test Stabilization)
+- Start date: 2025-10-27. Target completion: ✅ 2025-10-27 (Epic 2 COMPLETE) / 2025-11-24 (Epic 3)
+- **Completed:** T1 (Pitch Length), T2 (Ball Weight), T4 (Camera Diagnostics), ✅ T5 (Replay), T8 (Test Stabilization), ✅ T9 (Smart Trim)
 - T1 and T2 ran in parallel. T4 completed ahead of schedule (1d vs 6d planned).
-- **T5 (Epic 2):** Reduced from 7d to 5d due to trajectory-only approach (no video buffer complexity)
-- **T9 (Epic 2):** Smart trim auto-detects ball appearance/disappearance (1d implementation)
+- **✅ T5 (Epic 2):** Completed in 1d (trajectory-only approach, no video buffer complexity)
+- **✅ T9 (Epic 2):** Smart trim completed in 4 hours (faster than 5-hour estimate)
 - **T10 (Epic 3):** Hybrid auto-stop for future release (2d implementation)
-- T5 depends on T3. T9 depends on T3 and T5. T10 depends on T9.
+- T5 and T9 ran in parallel without T3 dependency (using mock detector for now).
 - See JSON for acceptance criteria, deliverables, and likely touchpoints in the codebase.
 
 ## Epic Links
