@@ -2112,12 +2112,36 @@
       "start": "2025-10-29",
       "durationDays": 1,
       "dependsOn": ["T16"],
-      "status": "planned",
+      "status": "completed",
+      "completedAt": "2025-10-29",
+      "completedOn": "2025-10-29T05:00:00+11:00",
       "priority": "HIGH",
       "owner": "frontend",
       "github": {
         "issueNumber": 31,
         "url": "https://github.com/vikraman2212/sports-analyst/issues/31"
+      },
+      "implementation": {
+        "summary": "Fully implemented camera settings controls with mobile compatibility layer. Discovered iOS Safari/Android Chrome limitations: only support basic constraints (width, height, frameRate, facingMode). Implemented adaptive UI with manual apply workflow to prevent UX issues.",
+        "status": "COMPLETE & TESTED",
+        "latestCommit": {
+          "sha": "8b1e526",
+          "date": "2025-10-29T05:00:00+11:00",
+          "message": "fix: Remove auto-apply from dropdowns, add explicit Apply Settings button"
+        },
+        "phases": [
+          "Phase 1: UI wiring (commit b946c3c) - handleOpenSettings, callbacks",
+          "Phase 2: Integration tests (commit b946c3c) - 13 new tests, 609 total passing",
+          "Phase 2.5: Mobile compatibility (commit a939aa4) - hasAdvancedControls detection, basic controls",
+          "Phase 3: Bug fixes (commits f10d8ec, 1f1bdf1, 8b1e526) - persistence, scrolling, manual apply"
+        ],
+        "bugsFixed": [
+          "Settings button disappears after calibration",
+          "Settings not persisted across deliveries",
+          "Panel not scrollable on mobile",
+          "Auto-apply makes preset buttons disappear"
+        ],
+        "testResults": "21 integration tests passing (13 workflow + 8 bug fixes), 609/609 total passing"
       },
       "problemStatement": {
         "issue": "CameraSettings component exists but is not wired to UI. Users cannot adjust camera FPS, resolution, exposure, etc.",
