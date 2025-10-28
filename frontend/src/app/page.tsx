@@ -43,6 +43,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
@@ -174,6 +175,20 @@ export default function Home() {
   }, []);
 
   /**
+   * Handle camera settings open
+   */
+  const handleOpenSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+  }, []);
+
+  /**
+   * Handle camera settings close
+   */
+  const handleCloseSettings = useCallback(() => {
+    setIsSettingsOpen(false);
+  }, []);
+
+  /**
    * Toggle replay view
    */
   const handleToggleReplay = useCallback(() => {
@@ -268,7 +283,9 @@ export default function Home() {
                 onCancelCalibration={handleCancelCalibration}
                 pitchLengthMeters={pitchState.meters}
                 onRequestCalibration={handleStartCalibration}
-                onRequestSettings={undefined} // TODO: Implement camera settings panel
+                onRequestSettings={handleOpenSettings}
+                isSettingsOpen={isSettingsOpen}
+                onCloseSettings={handleCloseSettings}
               />
             </div>
 

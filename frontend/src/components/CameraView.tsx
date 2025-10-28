@@ -24,6 +24,7 @@ import { useInference } from '../hooks/useInference';
 import { useCameraDiagnostics } from '../hooks/useCameraDiagnostics';
 import { CameraGuidance } from './CameraGuidance';
 import { CameraCalibrator } from './CameraCalibrator';
+import { CameraSettings } from './CameraSettings';
 import type { CalibrationProfile, DeliveryResult } from '../lib/types';
 
 export interface CameraViewProps {
@@ -84,6 +85,16 @@ export interface CameraViewProps {
   onRequestSettings?: () => void;
 
   /**
+   * Whether camera settings panel is open
+   */
+  isSettingsOpen?: boolean;
+
+  /**
+   * Callback when camera settings panel should close
+   */
+  onCloseSettings?: () => void;
+
+  /**
    * Optional CSS class name
    */
   className?: string;
@@ -113,6 +124,8 @@ export function CameraView({
   pitchLengthMeters = 20.12,
   onRequestCalibration,
   onRequestSettings,
+  isSettingsOpen = false,
+  onCloseSettings,
   className = '',
   resetTrigger = 0,
 }: CameraViewProps) {
@@ -395,6 +408,16 @@ export function CameraView({
             onCalibrationComplete={onCalibrationComplete || (() => {})}
             onCancel={onCancelCalibration || (() => {})}
           />
+        )}
+
+        {/* Camera Settings Overlay */}
+        {isSettingsOpen && (
+          <div className="absolute inset-0 z-50">
+            <CameraSettings
+              stream={stream}
+              onClose={onCloseSettings || (() => {})}
+            />
+          </div>
         )}
       </div>
 
