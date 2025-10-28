@@ -22,9 +22,12 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useCameraFeed } from '../hooks/useCameraFeed';
 import { useInference } from '../hooks/useInference';
 import { useCameraDiagnostics } from '../hooks/useCameraDiagnostics';
+import { useAutoStop } from '../hooks/useAutoStop';
 import { CameraGuidance } from './CameraGuidance';
 import { CameraCalibrator } from './CameraCalibrator';
 import { CameraSettings } from './CameraSettings';
+import { RecordingIndicator } from './RecordingIndicator';
+import { detectBallInFrame } from '../lib/detection';
 import type { CalibrationProfile, CameraConstraints, DeliveryResult } from '../lib/types';
 
 export interface CameraViewProps {
@@ -158,6 +161,22 @@ export function CameraView({
   // Camera diagnostics hook
   const { diagnostics, updateWithFrame } = useCameraDiagnostics(stream);
 
+  // Auto-stop hook - automatically stop recording when ball exits frame
+  const autoStopConfig = {
+    enabled: true, // TODO: make configurable via settings
+    threshold: 30, // 30 frames without detection (~1s at 30 FPS)
+    minFrames: 10, // Minimum frames before auto-stop can trigger
+    safetyTimeout: 10000, // 10 second max recording
+  };
+
+  const { 
+    state: autoStopState, 
+    onFrame: onAutoStopFrame, 
+    reset: resetAutoStop,
+    startTimeout,
+    stopTimeout 
+  } = useAutoStop(autoStopConfig);
+
   // Inference hook
   const {
     isAnalyzing,
@@ -196,13 +215,24 @@ export function CameraView({
   useEffect(() => {
     if (resetTrigger > 0) {
       reset();
+      resetAutoStop();
     }
-  }, [resetTrigger, reset]);
+  }, [resetTrigger, reset, resetAutoStop]);
 
   /**
-   * Frame capture loop during recording
+   * Watch for auto-stop trigger
+   * When shouldStop becomes true, automatically stop recording
    */
-  const captureLoop = useCallback(() => {
+  useEffect(() => {
+    if (autoStopState.shouldStop && isRecording.current) {
+      handleStopRecording();
+    }
+  }, [autoStopState.shouldStop]); // handleStopRecording added below
+
+  /**
+   * Frame capture loop during recording with auto-stop detection
+   */
+  const captureLoop = useCallback(async () => {
     if (!isRecording.current) return;
 
     const frame = captureFrame();
@@ -210,11 +240,22 @@ export function CameraView({
       addFrame(frame);
       // Update diagnostics with captured frame
       updateWithFrame(frame.imageData, frame.timestampMs);
+
+      // Run detection on frame for auto-stop logic
+      // This is a lightweight check - full analysis happens in stopAndAnalyze
+      try {
+        const detection = await detectBallInFrame(frame);
+        const hasDetection = detection !== null && detection.confidence > 0.3;
+        onAutoStopFrame(hasDetection);
+      } catch {
+        // If detection fails, treat as no detection
+        onAutoStopFrame(false);
+      }
     }
 
     // Continue capturing at ~30fps
     recordingInterval.current = window.setTimeout(captureLoop, 33);
-  }, [captureFrame, addFrame, updateWithFrame]);
+  }, [captureFrame, addFrame, updateWithFrame, onAutoStopFrame]);
 
   /**
    * Start recording delivery
@@ -226,9 +267,11 @@ export function CameraView({
 
     isRecording.current = true;
     startRecording();
+    resetAutoStop(); // Reset auto-stop state
+    startTimeout(); // Start safety timeout
     captureLoop();
     onRecordingStart?.();
-  }, [isCameraActive, startRecording, captureLoop, onRecordingStart]);
+  }, [isCameraActive, startRecording, resetAutoStop, startTimeout, captureLoop, onRecordingStart]);
 
   /**
    * Stop recording and analyze
@@ -241,6 +284,7 @@ export function CameraView({
       recordingInterval.current = null;
     }
 
+    stopTimeout(); // Stop safety timeout
     onRecordingStop?.();
 
     // Run analysis
@@ -250,7 +294,7 @@ export function CameraView({
       const errorMessage = err instanceof Error ? err.message : 'Analysis failed';
       onAnalysisError?.(errorMessage);
     }
-  }, [stopAndAnalyze, calibration, onRecordingStop, onAnalysisError]);
+  }, [stopAndAnalyze, calibration, stopTimeout, onRecordingStop, onAnalysisError]);
 
   /**
    * Reset for next delivery
@@ -316,17 +360,14 @@ export function CameraView({
           </div>
         )}
 
-        {/* Recording Indicator */}
-        {isRecording.current && !isAnalyzing && (
-          <div className="camera-view__overlay camera-view__overlay--recording" role="status" aria-live="polite">
-            <div className="camera-view__recording-indicator">
-              <span className="camera-view__recording-dot" aria-hidden="true" />
-              <span className="camera-view__recording-text">
-                Recording ({frameCount} frames)
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Recording Indicator with Auto-Stop Countdown */}
+        <RecordingIndicator
+          isRecording={isRecording.current && !isAnalyzing}
+          autoStopState={autoStopState}
+          fps={diagnostics.inferredFPS || diagnostics.reportedFPS || 30}
+          onManualStop={handleStopRecording}
+          frameCount={frameCount}
+        />
 
         {/* Analysis Progress */}
         {isAnalyzing && (
