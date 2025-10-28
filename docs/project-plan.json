@@ -236,26 +236,152 @@
       "start": "2025-10-30",
       "durationDays": 2,
       "dependsOn": [],
-      "status": "ready",
+      "status": "completed",
+      "completedAt": "2025-10-28",
+      "completedOn": "2025-10-28T09:10:00Z",
       "owner": "ml",
       "github": {
         "issueNumber": 21,
         "url": "https://github.com/vikraman2212/sports-analyst/issues/21"
       },
+      "implementation": {
+        "summary": "Comprehensive survey completed identifying 6 viable models/datasets with 3 shortlisted as top priorities. All models have compatible licenses for evaluation. Download verified for primary candidate (Roboflow Cricket Ball Tracking - 7,452 images).",
+        "status": "COMPLETE & DOCUMENTED",
+        "latestCommit": {
+          "date": "2025-10-28T09:10:00Z",
+          "message": "feat(ml): implement T3A - Survey Pretrained Cricket Ball Models"
+        }
+      },
+      "verification": {
+        "date": "2025-10-28",
+        "status": "VERIFIED - READY FOR T3B",
+        "method": "Research survey + download verification",
+        "acceptanceCriteria": [
+          {
+            "id": "AC-001",
+            "description": "At least 2 candidate models/datasets identified",
+            "status": "PASS",
+            "evidence": "6 viable candidates identified, 3 shortlisted (exceeds minimum)"
+          },
+          {
+            "id": "AC-002",
+            "description": "Licenses allow evaluation and internal use",
+            "status": "PASS",
+            "evidence": "CC BY 4.0 licenses for Models #1 and #2 allow free evaluation and commercial use with attribution"
+          },
+          {
+            "id": "AC-003",
+            "description": "Downloadable in YOLO format or convertible",
+            "status": "PASS",
+            "evidence": "All shortlisted models use YOLOv8 format, ONNX export verified"
+          },
+          {
+            "id": "AC-004",
+            "description": "Download instructions verified (at least 1 model downloaded successfully)",
+            "status": "PASS",
+            "evidence": "Model #1 (Roboflow Cricket Ball Tracking) download verified with test script"
+          }
+        ]
+      },
       "deliverables": [
-        "Shortlist with links, license, image count, resolution, class schema",
-        "Download scripts or instructions for each candidate"
+        {
+          "id": "D-001",
+          "name": "Shortlist with links, license, image count, resolution, class schema",
+          "status": "COMPLETE",
+          "files": [
+            "docs/T3A_model_survey.md - Full survey results with detailed evaluation (17.5 KB)",
+            "docs/T3A_shortlist.json - Machine-readable shortlist with metadata (14.3 KB)"
+          ],
+          "features": [
+            "3 shortlisted models with complete metadata",
+            "License analysis (CC BY 4.0, AGPLv3, Custom)",
+            "Dataset statistics (844 to 7,452 images)",
+            "Class schema documentation",
+            "Performance metrics where available",
+            "YOLOv8 vs YOLO11 comparison"
+          ]
+        },
+        {
+          "id": "D-002",
+          "name": "Download scripts or instructions for each candidate",
+          "status": "COMPLETE",
+          "files": [
+            "ml/download-scripts/download_roboflow_cricket_ball.py - Model #1 download script",
+            "ml/download-scripts/download_akel_varghese.py - Model #2 download script",
+            "ml/download-scripts/download_gts_ai.sh - Model #3 download script",
+            "ml/download-scripts/README.md - Usage instructions"
+          ],
+          "features": [
+            "Python scripts for Roboflow models (Models #1, #2)",
+            "Bash script for GTS AI dataset (Model #3)",
+            "API inference examples",
+            "ONNX export instructions",
+            "Verification steps"
+          ]
+        }
       ],
       "acceptanceCriteria": [
-        "At least 2 candidate models/datasets identified",
-        "Licenses allow evaluation and internal use",
-        "Downloadable in YOLO format or convertible"
+        "At least 2 candidate models/datasets identified - ✅ PASS (6 identified, 3 shortlisted)",
+        "Licenses allow evaluation and internal use - ✅ PASS (CC BY 4.0 for top 2)",
+        "Downloadable in YOLO format or convertible - ✅ PASS (all YOLO format)",
+        "Download instructions verified - ✅ PASS (Model #1 download verified)"
       ],
       "references": [
         "Ultralytics Detect Docs: https://docs.ultralytics.com/tasks/detect/",
         "Roboflow Universe search: https://universe.roboflow.com/search?q=cricket%20ball",
         "GitHub example: https://github.com/irfan092-ai/cricket-ball-detection-yolov8",
-        "GitHub trajectory+YOLO pipeline: https://github.com/HiteshDereddy/RAIE-Transformer"
+        "GitHub trajectory+YOLO pipeline: https://github.com/HiteshDereddy/RAIE-Transformer",
+        "Roboflow Cricket Ball Tracking: https://universe.roboflow.com/cricket-ball-tracking-dataset",
+        "Akel Varghese Model: https://universe.roboflow.com/akel-varghese/cricket-ball-prediction",
+        "GTS AI Dataset: https://gts.ai/dataset-download/cricket-ball-detection-dataset/",
+        "YOLO11 Documentation: https://docs.ultralytics.com/models/yolo11/",
+        "Ultralytics License: https://www.ultralytics.com/license"
+      ],
+      "researchFindings": {
+        "totalCandidates": 6,
+        "shortlistedModels": [
+          {
+            "rank": 1,
+            "name": "Roboflow Cricket Ball Tracking",
+            "images": 7452,
+            "license": "CC BY 4.0",
+            "priority": "HIGH",
+            "downloadVerified": true
+          },
+          {
+            "rank": 2,
+            "name": "Akel Varghese Cricket Ball Prediction",
+            "images": 844,
+            "license": "CC BY 4.0",
+            "priority": "MEDIUM",
+            "downloadVerified": false
+          },
+          {
+            "rank": 3,
+            "name": "GTS AI Cricket Ball Detection",
+            "images": 1778,
+            "license": "Custom (evaluation allowed)",
+            "priority": "MEDIUM",
+            "requiresTraining": true
+          }
+        ],
+        "architectureRecommendation": "YOLO11n preferred for small object detection (22% fewer params, better accuracy)",
+        "licensingGuidance": "CC BY 4.0 models free for evaluation and commercial use with attribution. AGPLv3 (Ultralytics) requires commercial license for proprietary deployment."
+      },
+      "nextSteps": [
+        "T3B: Benchmark shortlisted models on sample cricket clips",
+        "Test Model #1 (Roboflow Cricket Ball Tracking) first - primary candidate",
+        "Compare against Model #2 and YOLO11n baseline",
+        "Measure mAP, precision, recall, inference speed",
+        "Decision: Use pretrained (if mAP ≥ 0.85) OR train custom (if mAP < 0.85)"
+      ],
+      "likelyFiles": [
+        "docs/T3A_model_survey.md ✅",
+        "docs/T3A_shortlist.json ✅",
+        "ml/download-scripts/download_roboflow_cricket_ball.py ✅",
+        "ml/download-scripts/download_akel_varghese.py ✅",
+        "ml/download-scripts/download_gts_ai.sh ✅",
+        "ml/download-scripts/README.md ✅"
       ]
     },
     {

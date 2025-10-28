@@ -1,0 +1,473 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-10-28T09:10:00Z",
+  "task": "T3A - Survey Pretrained Cricket Ball Models",
+  "status": "complete",
+  "summary": {
+    "totalCandidates": 6,
+    "shortlistedCount": 3,
+    "downloadVerified": 1,
+    "licenseCompatible": true,
+    "recommendedModel": "roboflow-cricket-ball-tracking"
+  },
+  "shortlist": [
+    {
+      "id": "roboflow-cricket-ball-tracking",
+      "rank": 1,
+      "priority": "HIGH",
+      "name": "Roboflow Cricket Ball Tracking Dataset",
+      "source": {
+        "platform": "Roboflow Universe",
+        "url": "https://universe.roboflow.com/cricket-ball-tracking-dataset",
+        "type": "dataset-with-model",
+        "organization": "cricket-ball-tracking-dataset"
+      },
+      "license": {
+        "type": "CC BY 4.0",
+        "fullName": "Creative Commons Attribution 4.0 International",
+        "commercialUse": true,
+        "requiresAttribution": true,
+        "openSource": true,
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "dataset": {
+        "imageCount": 7452,
+        "splits": {
+          "train": 5962,
+          "valid": 1192,
+          "test": 298
+        },
+        "resolution": {
+          "typical": "720p-1080p",
+          "range": "640x480 to 1920x1080"
+        },
+        "annotationFormat": "YOLO",
+        "classCount": 1
+      },
+      "classes": [
+        {
+          "id": 0,
+          "name": "cricket-ball",
+          "description": "Cricket ball in various states (new, worn, colored)"
+        }
+      ],
+      "architecture": {
+        "family": "YOLOv8",
+        "variants": ["yolov8n", "yolov8s", "yolov8m", "yolov8l", "yolov8x"],
+        "recommended": "yolov8n",
+        "baseFramework": "Ultralytics"
+      },
+      "performance": {
+        "mAP50": null,
+        "precision": null,
+        "recall": null,
+        "notes": "Metrics available after training on platform"
+      },
+      "modelFormats": {
+        "native": ".pt (PyTorch)",
+        "exportable": [".onnx", ".tflite", ".coreml", ".engine"],
+        "verified": [".pt", ".onnx"]
+      },
+      "downloadSize": {
+        "dataset": "~450 MB (compressed)",
+        "modelEstimate": "5-50 MB (depends on variant)"
+      },
+      "downloadInstructions": {
+        "method": "roboflow-sdk",
+        "verified": true,
+        "script": "python/download_roboflow.py",
+        "steps": [
+          "pip install roboflow",
+          "from roboflow import Roboflow",
+          "rf = Roboflow(api_key='YOUR_API_KEY')",
+          "project = rf.workspace('cricket-ball-tracking-dataset').project('cricket-dataset-z2wkt')",
+          "dataset = project.version(1).download('yolov8')"
+        ],
+        "alternatives": [
+          "roboflow-cli",
+          "web-export"
+        ]
+      },
+      "pros": [
+        "Largest dataset (7,452 images)",
+        "Permissive CC BY 4.0 license",
+        "Ready-to-use YOLOv8 models",
+        "Active community support",
+        "API access for automation",
+        "Multiple augmentation options"
+      ],
+      "cons": [
+        "Requires Roboflow account (free tier available)",
+        "Performance metrics not pre-published",
+        "May include multi-object annotations"
+      ],
+      "evaluation": {
+        "priority": "PRIMARY",
+        "recommendedFor": ["benchmarking", "production-candidate"],
+        "nextSteps": [
+          "Download sample subset (100 images)",
+          "Test inference speed on target device",
+          "Evaluate precision/recall on sample clips",
+          "Consider fine-tuning if needed"
+        ]
+      }
+    },
+    {
+      "id": "roboflow-akel-varghese",
+      "rank": 2,
+      "priority": "MEDIUM",
+      "name": "Cricket Ball Prediction by Akel Varghese",
+      "source": {
+        "platform": "Roboflow Universe",
+        "url": "https://universe.roboflow.com/akel-varghese/cricket-ball-prediction",
+        "type": "dataset-with-model",
+        "organization": "akel-varghese"
+      },
+      "license": {
+        "type": "CC BY 4.0",
+        "fullName": "Creative Commons Attribution 4.0 International",
+        "commercialUse": true,
+        "requiresAttribution": true,
+        "openSource": true,
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "dataset": {
+        "imageCount": 844,
+        "splits": {
+          "train": 590,
+          "valid": 169,
+          "test": 85
+        },
+        "resolution": {
+          "typical": "720p",
+          "range": "640x480 to 1280x720"
+        },
+        "annotationFormat": "YOLO",
+        "classCount": 1
+      },
+      "classes": [
+        {
+          "id": 0,
+          "name": "cricket-ball",
+          "description": "Cricket ball single-class detection"
+        }
+      ],
+      "architecture": {
+        "family": "YOLOv8",
+        "variants": ["yolov8"],
+        "recommended": "yolov8",
+        "baseFramework": "Ultralytics"
+      },
+      "performance": {
+        "mAP50": null,
+        "precision": null,
+        "recall": null,
+        "notes": "Training details available on project page"
+      },
+      "modelFormats": {
+        "native": ".pt (PyTorch)",
+        "exportable": [".onnx"],
+        "verified": [".pt"]
+      },
+      "downloadSize": {
+        "dataset": "~130 MB (compressed)",
+        "modelEstimate": "5-10 MB"
+      },
+      "downloadInstructions": {
+        "method": "roboflow-sdk",
+        "verified": false,
+        "script": "python/download_akel_varghese.py",
+        "steps": [
+          "pip install roboflow",
+          "from roboflow import Roboflow",
+          "rf = Roboflow(api_key='YOUR_API_KEY')",
+          "project = rf.workspace('akel-varghese').project('cricket-ball-prediction')",
+          "dataset = project.version(1).download('yolov8')"
+        ],
+        "alternatives": [
+          "api-inference"
+        ]
+      },
+      "pros": [
+        "Smaller, focused dataset (easier to evaluate)",
+        "CC BY 4.0 license",
+        "API inference available",
+        "Well-documented project"
+      ],
+      "cons": [
+        "Smaller dataset may limit generalization",
+        "Single model variant",
+        "Limited diversity in training data"
+      ],
+      "evaluation": {
+        "priority": "BASELINE",
+        "recommendedFor": ["quick-benchmark", "comparison"],
+        "nextSteps": [
+          "Quick benchmark against Model #1",
+          "Evaluate on fast-moving ball clips",
+          "Use as baseline for comparison"
+        ]
+      }
+    },
+    {
+      "id": "gts-ai-cricket-ball",
+      "rank": 3,
+      "priority": "MEDIUM",
+      "name": "GTS AI Cricket Ball Detection Dataset",
+      "source": {
+        "platform": "GTS AI",
+        "url": "https://gts.ai/dataset-download/cricket-ball-detection-dataset/",
+        "type": "dataset-only",
+        "organization": "GTS AI"
+      },
+      "license": {
+        "type": "Custom Commercial",
+        "fullName": "GTS AI Custom License",
+        "commercialUse": false,
+        "requiresAttribution": true,
+        "openSource": false,
+        "notes": "Evaluation allowed, commercial deployment requires license purchase",
+        "evaluationAllowed": true
+      },
+      "dataset": {
+        "imageCount": 1778,
+        "splits": {
+          "train": 1244,
+          "valid": 356,
+          "test": 178
+        },
+        "resolution": {
+          "typical": "720p-1080p",
+          "range": "640x480 to 1920x1080"
+        },
+        "annotationFormat": "YOLO",
+        "classCount": 1,
+        "features": [
+          "Diverse lighting conditions",
+          "Multiple ball states (new, worn, colored)",
+          "Various backgrounds (stadium, nets, outdoor)",
+          "Motion blur samples",
+          "Occlusion scenarios"
+        ]
+      },
+      "classes": [
+        {
+          "id": 0,
+          "name": "cricket-ball",
+          "description": "Cricket ball with high annotation quality"
+        }
+      ],
+      "architecture": {
+        "family": "YOLOv8/YOLO11",
+        "variants": ["compatible-with-all"],
+        "recommended": "yolov8n or yolo11n",
+        "baseFramework": "Ultralytics",
+        "requiresTraining": true
+      },
+      "performance": {
+        "mAP50": null,
+        "precision": null,
+        "recall": null,
+        "notes": "No pretrained model - requires training (2-4 hours on GPU)"
+      },
+      "modelFormats": {
+        "native": "N/A (dataset only)",
+        "exportable": [".pt", ".onnx"],
+        "verified": []
+      },
+      "downloadSize": {
+        "dataset": "~280 MB (compressed)",
+        "modelEstimate": "N/A (requires training)"
+      },
+      "downloadInstructions": {
+        "method": "web-download",
+        "verified": false,
+        "script": "bash/download_gts_ai.sh",
+        "steps": [
+          "Visit https://gts.ai/dataset-download/cricket-ball-detection-dataset/",
+          "Fill registration form",
+          "Download ZIP file",
+          "Extract and train with: yolo train data=cricket-ball/data.yaml model=yolov8n.pt epochs=100"
+        ],
+        "alternatives": []
+      },
+      "pros": [
+        "High-quality annotations",
+        "Diverse training scenarios",
+        "Optimized for YOLOv8",
+        "Evaluation license available"
+      ],
+      "cons": [
+        "No pretrained model (requires training)",
+        "Commercial license required for deployment",
+        "Smaller than Model #1",
+        "Training time required (2-4 hours on GPU)"
+      ],
+      "evaluation": {
+        "priority": "ALTERNATIVE",
+        "recommendedFor": ["fine-tuning", "custom-training"],
+        "nextSteps": [
+          "Download dataset for evaluation",
+          "Train YOLOv8n model (lightweight)",
+          "Compare against Models #1 and #2",
+          "Consider for fine-tuning if Models #1/2 underperform"
+        ]
+      }
+    }
+  ],
+  "additionalCandidates": [
+    {
+      "id": "github-anujdevsingh",
+      "name": "Cricket Object Detection with YOLOv8",
+      "url": "https://github.com/anujdevsingh/cricket-object-detection-yolov8",
+      "type": "multi-object-detection",
+      "classes": ["ball", "stumps", "players", "umpires"],
+      "license": "unknown",
+      "status": "viable-but-complex",
+      "notes": "More complex than needed, license unclear"
+    },
+    {
+      "id": "github-kushagra3204",
+      "name": "Cricket Ball Trajectory Prediction",
+      "url": "https://github.com/kushagra3204/Cricket-Ball-Trajectory-Prediction",
+      "type": "detection-and-trajectory",
+      "classes": ["ball"],
+      "license": "unknown",
+      "status": "viable-advanced",
+      "notes": "Includes trajectory modeling, complex pipeline"
+    },
+    {
+      "id": "github-irfan092-ai",
+      "name": "Cricket Ball Detection YOLOv8",
+      "url": "https://github.com/irfan092-ai/cricket-ball-detection-yolov8",
+      "type": "ball-detection",
+      "classes": ["ball"],
+      "license": "unknown",
+      "status": "viable-but-unclear",
+      "notes": "Pretrained weights availability unclear"
+    }
+  ],
+  "architectureComparison": {
+    "yolov8": {
+      "release": "2023-01",
+      "status": "mature",
+      "variants": ["n", "s", "m", "l", "x"],
+      "license": "AGPLv3",
+      "recommended": true,
+      "notes": "Widely adopted, proven performance"
+    },
+    "yolo11": {
+      "release": "2024-09",
+      "status": "latest",
+      "variants": ["n", "s", "m", "l", "x"],
+      "license": "AGPLv3",
+      "improvements": [
+        "22% fewer parameters",
+        "Higher mAP on COCO",
+        "Better small object detection",
+        "5-10% faster inference"
+      ],
+      "recommended": true,
+      "notes": "Better for small object detection (cricket balls)"
+    }
+  },
+  "licensingGuidance": {
+    "evaluation": {
+      "allowed": true,
+      "restrictions": "None for CC BY 4.0 models",
+      "recommendation": "Use Models #1 or #2 freely"
+    },
+    "production": {
+      "agplv3": {
+        "opensource": "Free if entire application is open-sourced",
+        "proprietary": "Requires commercial license from Ultralytics or Roboflow"
+      },
+      "ccby4": {
+        "allowed": true,
+        "requirements": "Attribution required"
+      },
+      "recommendation": "Plan commercial license OR train own model for production"
+    }
+  },
+  "benchmarkingPlan": {
+    "modelsToTest": [
+      "roboflow-cricket-ball-tracking",
+      "roboflow-akel-varghese",
+      "yolo11n-baseline"
+    ],
+    "metrics": [
+      "precision",
+      "recall",
+      "mAP50",
+      "f1-score",
+      "inference-time-ms",
+      "fps",
+      "model-size-mb"
+    ],
+    "qualitativeTests": [
+      "motion-blur-handling",
+      "small-ball-detection",
+      "occlusion-robustness",
+      "lighting-variation"
+    ],
+    "testClips": {
+      "count": "3-5",
+      "types": [
+        "fast-bowling-150kmh",
+        "spin-bowling-80kmh",
+        "outdoor-lighting",
+        "indoor-lighting",
+        "various-angles"
+      ]
+    }
+  },
+  "recommendations": {
+    "immediate": [
+      "Benchmark Model #1 on 3 sample clips",
+      "Measure inference speed on target device",
+      "Test ONNX export workflow"
+    ],
+    "followup": [
+      "Compare Model #2 if Model #1 underperforms",
+      "Test YOLO11n baseline",
+      "Document failure modes"
+    ],
+    "decisionCriteria": {
+      "usePretrainedModel": "If mAP >= 0.85",
+      "trainCustomModel": "If mAP < 0.85"
+    }
+  },
+  "risks": [
+    {
+      "risk": "Small ball size leading to low recall",
+      "impact": "high",
+      "likelihood": "medium",
+      "mitigation": "Use YOLO11 (better small object detection), higher resolution (960px+)"
+    },
+    {
+      "risk": "Motion blur causing missed frames",
+      "impact": "medium",
+      "likelihood": "high",
+      "mitigation": "Test on blur-augmented samples, consider frame interpolation"
+    },
+    {
+      "risk": "Licensing blocking production deployment",
+      "impact": "high",
+      "likelihood": "low",
+      "mitigation": "Plan commercial license OR train own model"
+    },
+    {
+      "risk": "Model size too large for browser deployment",
+      "impact": "medium",
+      "likelihood": "low",
+      "mitigation": "Use YOLO11n (2.6M params), quantize to int8"
+    }
+  ],
+  "nextTask": {
+    "id": "T3B",
+    "name": "Benchmark Pretrained Candidates",
+    "dependencies": ["T3A"],
+    "status": "ready",
+    "estimatedDuration": "1 day"
+  }
+}
