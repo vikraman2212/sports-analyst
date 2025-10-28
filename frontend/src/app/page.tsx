@@ -14,8 +14,10 @@ import { SpeedDisplay } from '@/components/SpeedDisplay';
 import { createCricketPitchCalibration, createPitchCalibration } from '@/lib/calibration';
 import { PitchLengthSelector } from '@/components/PitchLengthSelector';
 import { BallWeightSelector } from '@/components/BallWeightSelector';
+import { CalibrationStatusBadge } from '@/components/CalibrationStatusBadge';
 import { usePitchLength } from '@/hooks/usePitchLength';
 import { useBallWeight } from '@/hooks/useBallWeight';
+import { useCalibrationProfiles } from '@/hooks/useCalibrationProfiles';
 import type { DeliveryResult } from '@/lib/types';
 import type { ReplaySession } from '@/lib/replay/types';
 import { exportReplay } from '@/lib/export/replayExport';
@@ -40,17 +42,30 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
+  const { activeProfile, createProfile } = useCalibrationProfiles();
 
-  // Create default calibration (memoized to avoid recreating on every render)
+  // Create calibration based on active profile and current pitch/weight settings
   const calibration = useMemo(() => {
-    // Standard uses default helper; others use explicit meters
+    // If user has performed calibration, use their measured pixels
+    if (activeProfile && activeProfile.id !== 'default') {
+      // Update the profile with current pitch length and ball weight settings
+      return {
+        ...activeProfile,
+        referenceDistanceMeters: pitchState.meters,
+        ballMassGrams: ballWeightState.grams,
+      };
+    }
+    
+    // Otherwise use default pixels
     if (pitchState.meters === 20.12) {
       return createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, ballWeightState.grams);
     }
     return createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters, ballWeightState.grams);
-  }, [pitchState.meters, ballWeightState.grams]);
+  }, [activeProfile, pitchState.meters, ballWeightState.grams]);
 
   const pitchLabel = useMemo(() => (
     pitchState.meters === 20.12 ? 'Standard' : (pitchState.meters === 16 ? 'Youth' : 'Custom')
@@ -117,6 +132,45 @@ export default function Home() {
     setError(null);
     // Increment resetTrigger to notify CameraView to reset
     setResetTrigger((prev) => prev + 1);
+  }, []);
+
+  /**
+   * Handle calibration button click
+   */
+  const handleStartCalibration = useCallback(() => {
+    setIsCalibrating(true);
+    setCurrentResult(null);
+    setReplaySession(null);
+    setShowReplay(false);
+  }, []);
+
+  /**
+   * Handle calibration completion
+   */
+  const handleCalibrationComplete = useCallback((pitchLengthPixels: number) => {
+    // Create a new calibration profile with the measured pixels
+    const timestamp = new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    
+    createProfile(
+      `Calibration ${timestamp}`,
+      pitchLengthPixels,
+      pitchState.meters,
+      ballWeightState.grams
+    );
+    
+    setIsCalibrating(false);
+  }, [createProfile, pitchState.meters, ballWeightState.grams]);
+
+  /**
+   * Handle calibration cancellation
+   */
+  const handleCancelCalibration = useCallback(() => {
+    setIsCalibrating(false);
   }, []);
 
   /**
@@ -195,6 +249,12 @@ export default function Home() {
               <div className="mb-4 space-y-3">
                 <PitchLengthSelector />
                 <BallWeightSelector />
+                {activeProfile && (
+                  <CalibrationStatusBadge
+                    profile={activeProfile}
+                    onRecalibrate={handleStartCalibration}
+                  />
+                )}
               </div>
               <CameraView
                 calibration={calibration}
@@ -203,6 +263,12 @@ export default function Home() {
                 onRecordingStart={handleRecordingStart}
                 onRecordingStop={handleRecordingStop}
                 resetTrigger={resetTrigger}
+                isCalibrating={isCalibrating}
+                onCalibrationComplete={handleCalibrationComplete}
+                onCancelCalibration={handleCancelCalibration}
+                pitchLengthMeters={pitchState.meters}
+                onRequestCalibration={handleStartCalibration}
+                onRequestSettings={undefined} // TODO: Implement camera settings panel
               />
             </div>
 

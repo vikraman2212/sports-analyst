@@ -27,6 +27,16 @@ export interface CameraGuidanceProps {
    * Optional CSS class name
    */
   className?: string;
+
+  /**
+   * Callback when user wants to open camera calibration wizard
+   */
+  onOpenCalibration?: () => void;
+
+  /**
+   * Callback when user wants to adjust camera settings (exposure, ISO, etc.)
+   */
+  onOpenSettings?: () => void;
 }
 
 /**
@@ -38,6 +48,8 @@ export function CameraGuidance({
   diagnostics,
   showTechnicalDetails = false,
   className = '',
+  onOpenCalibration,
+  onOpenSettings,
 }: CameraGuidanceProps) {
   const recommendations = useMemo(
     () => getCameraRecommendations(diagnostics),
@@ -157,6 +169,30 @@ export function CameraGuidance({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      {(onOpenCalibration || onOpenSettings) && !diagnostics.meetsRequirements && (
+        <div className="camera-guidance__actions">
+          {onOpenCalibration && (
+            <button
+              onClick={onOpenCalibration}
+              className="camera-guidance__action-btn camera-guidance__action-btn--calibrate"
+              aria-label="Open camera calibration wizard"
+            >
+              📐 Calibrate Camera
+            </button>
+          )}
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="camera-guidance__action-btn camera-guidance__action-btn--settings"
+              aria-label="Adjust camera settings"
+            >
+              ⚙️ Adjust Settings
+            </button>
+          )}
         </div>
       )}
 
@@ -298,6 +334,77 @@ export function CameraGuidance({
         @media (prefers-color-scheme: dark) {
           .camera-guidance__recommendation-item::before {
             color: #60a5fa;
+          }
+        }
+
+        .camera-guidance__actions {
+          margin-top: 16px;
+          padding-top: 12px;
+          border-top: 1px solid #e5e7eb;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .camera-guidance__actions {
+            border-top-color: #374151;
+          }
+        }
+
+        .camera-guidance__action-btn {
+          flex: 1;
+          min-width: 140px;
+          padding: 8px 16px;
+          border: none;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .camera-guidance__action-btn--calibrate {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .camera-guidance__action-btn--calibrate:hover {
+          background: #2563eb;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+        }
+
+        .camera-guidance__action-btn--settings {
+          background: #8b5cf6;
+          color: white;
+        }
+
+        .camera-guidance__action-btn--settings:hover {
+          background: #7c3aed;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .camera-guidance__action-btn--calibrate {
+            background: #2563eb;
+          }
+
+          .camera-guidance__action-btn--calibrate:hover {
+            background: #1d4ed8;
+          }
+
+          .camera-guidance__action-btn--settings {
+            background: #7c3aed;
+          }
+
+          .camera-guidance__action-btn--settings:hover {
+            background: #6d28d9;
           }
         }
       `}</style>

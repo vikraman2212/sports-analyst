@@ -23,6 +23,7 @@ import { useCameraFeed } from '../hooks/useCameraFeed';
 import { useInference } from '../hooks/useInference';
 import { useCameraDiagnostics } from '../hooks/useCameraDiagnostics';
 import { CameraGuidance } from './CameraGuidance';
+import { CameraCalibrator } from './CameraCalibrator';
 import type { CalibrationProfile, DeliveryResult } from '../lib/types';
 
 export interface CameraViewProps {
@@ -53,6 +54,36 @@ export interface CameraViewProps {
   onRecordingStop?: () => void;
 
   /**
+   * Callback when calibration completes
+   */
+  onCalibrationComplete?: (pitchLengthPixels: number) => void;
+
+  /**
+   * Whether calibration mode is active
+   */
+  isCalibrating?: boolean;
+
+  /**
+   * Callback when calibration is cancelled
+   */
+  onCancelCalibration?: () => void;
+
+  /**
+   * Pitch length in meters for calibration
+   */
+  pitchLengthMeters?: number;
+
+  /**
+   * Callback when user requests calibration from camera guidance
+   */
+  onRequestCalibration?: () => void;
+
+  /**
+   * Callback when user requests camera settings adjustment
+   */
+  onRequestSettings?: () => void;
+
+  /**
    * Optional CSS class name
    */
   className?: string;
@@ -76,6 +107,12 @@ export function CameraView({
   onAnalysisError,
   onRecordingStart,
   onRecordingStop,
+  onCalibrationComplete,
+  isCalibrating = false,
+  onCancelCalibration,
+  pitchLengthMeters = 20.12,
+  onRequestCalibration,
+  onRequestSettings,
   className = '',
   resetTrigger = 0,
 }: CameraViewProps) {
@@ -244,9 +281,14 @@ export function CameraView({
         )}
 
         {/* Camera Guidance Overlay */}
-        {isCameraActive && !isRecording.current && !isAnalyzing && !hasResult && !hasError && (
+        {isCameraActive && !isRecording.current && !isAnalyzing && !hasResult && !hasError && !isCalibrating && (
           <div className="camera-view__guidance-overlay">
-            <CameraGuidance diagnostics={diagnostics} showTechnicalDetails />
+            <CameraGuidance 
+              diagnostics={diagnostics} 
+              showTechnicalDetails 
+              onOpenCalibration={onRequestCalibration}
+              onOpenSettings={onRequestSettings}
+            />
           </div>
         )}
 
@@ -343,6 +385,16 @@ export function CameraView({
               </button>
             </div>
           </div>
+        )}
+
+        {/* Calibration Overlay */}
+        {isCalibrating && videoRef.current && (
+          <CameraCalibrator
+            videoRef={videoRef}
+            pitchLengthMeters={pitchLengthMeters}
+            onCalibrationComplete={onCalibrationComplete || (() => {})}
+            onCancel={onCancelCalibration || (() => {})}
+          />
         )}
       </div>
 
