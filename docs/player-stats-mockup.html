@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Stats - Speedometer Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .profile-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .profile-selector:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 32px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .stat-unit {
+            font-size: 18px;
+            color: #999;
+            font-weight: 400;
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            color: #22c55e;
+            margin-top: 8px;
+        }
+
+        .stat-trend.down {
+            color: #ef4444;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            padding: 32px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Mock Chart */
+        .mock-chart {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(to top, #f0f0f0 0%, #f0f0f0 1px, transparent 1px);
+            background-size: 100% 30px;
+            position: relative;
+            border-radius: 8px;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 100%;
+            gap: 8px;
+            padding: 20px;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        /* Session History */
+        .session-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .session-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .session-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .session-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Export Button */
+        .export-btn {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .export-btn:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 32px;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.good {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .badge.excellent {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .badge.short {
+            background: #fef3c7;
+            color: #d97706;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Player Statistics</h1>
+            <div class="profile-selector">
+                <div class="avatar">V</div>
+                <span>Vikram</span>
+                <span>▼</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active">Overview</div>
+            <div class="tab">Sessions</div>
+            <div class="tab">Progress</div>
+            <div class="tab">Settings</div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-label">Average Speed</div>
+                <div class="stat-value">136.4 <span class="stat-unit">km/h</span></div>
+                <div class="stat-trend">↗ +3.2 km/h vs last session</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Max Speed</div>
+                <div class="stat-value">148.7 <span class="stat-unit">km/h</span></div>
+                <div class="stat-trend">🎉 Personal Best!</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Deliveries</div>
+                <div class="stat-value">247</div>
+                <div class="stat-trend">Across 18 sessions</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Consistency</div>
+                <div class="stat-value">92 <span class="stat-unit">%</span></div>
+                <div class="stat-trend">↗ Improving</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- Speed Trend -->
+            <div class="chart-container">
+                <div class="section-title">Speed Trend (Last 30 Days)</div>
+                <div class="filters">
+                    <button class="filter-btn active">Last 7 days</button>
+                    <button class="filter-btn">Last 30 days</button>
+                    <button class="filter-btn">Last 3 months</button>
+                    <button class="filter-btn">All time</button>
+                </div>
+                <svg class="mock-chart" viewBox="0 0 800 300" preserveAspectRatio="none">
+                    <!-- Grid lines -->
+                    <line x1="0" y1="60" x2="800" y2="60" stroke="#f0f0f0" stroke-width="1"/>
+                    <line x1="0" y1="120" x2="800" y2="120" stroke="#f0f0f0" stroke-width="1"/>
+                    <line x1="0" y1="180" x2="800" y2="180" stroke="#f0f0f0" stroke-width="1"/>
+                    <line x1="0" y1="240" x2="800" y2="240" stroke="#f0f0f0" stroke-width="1"/>
+                    
+                    <!-- Trend line -->
+                    <polyline 
+                        points="50,240 150,220 250,200 350,190 450,180 550,170 650,160 750,150"
+                        fill="none"
+                        stroke="url(#gradient)"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                    
+                    <!-- Area under curve -->
+                    <polygon 
+                        points="50,240 150,220 250,200 350,190 450,180 550,170 650,160 750,150 750,300 50,300"
+                        fill="url(#areaGradient)"
+                        opacity="0.3"
+                    />
+                    
+                    <!-- Data points -->
+                    <circle cx="50" cy="240" r="5" fill="#667eea"/>
+                    <circle cx="150" cy="220" r="5" fill="#667eea"/>
+                    <circle cx="250" cy="200" r="5" fill="#667eea"/>
+                    <circle cx="350" cy="190" r="5" fill="#667eea"/>
+                    <circle cx="450" cy="180" r="5" fill="#667eea"/>
+                    <circle cx="550" cy="170" r="5" fill="#667eea"/>
+                    <circle cx="650" cy="160" r="5" fill="#667eea"/>
+                    <circle cx="750" cy="150" r="6" fill="#764ba2"/>
+                    
+                    <!-- Gradients -->
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.5" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Y-axis labels -->
+                    <text x="10" y="65" font-size="12" fill="#999">150</text>
+                    <text x="10" y="125" font-size="12" fill="#999">140</text>
+                    <text x="10" y="185" font-size="12" fill="#999">130</text>
+                    <text x="10" y="245" font-size="12" fill="#999">120</text>
+                    
+                    <!-- X-axis labels -->
+                    <text x="50" y="295" font-size="11" fill="#999" text-anchor="middle">Mon</text>
+                    <text x="150" y="295" font-size="11" fill="#999" text-anchor="middle">Tue</text>
+                    <text x="250" y="295" font-size="11" fill="#999" text-anchor="middle">Wed</text>
+                    <text x="350" y="295" font-size="11" fill="#999" text-anchor="middle">Thu</text>
+                    <text x="450" y="295" font-size="11" fill="#999" text-anchor="middle">Fri</text>
+                    <text x="550" y="295" font-size="11" fill="#999" text-anchor="middle">Sat</text>
+                    <text x="650" y="295" font-size="11" fill="#999" text-anchor="middle">Sun</text>
+                </svg>
+            </div>
+
+            <!-- Speed Distribution -->
+            <div class="chart-container">
+                <div class="section-title">Speed Distribution</div>
+                <div class="mock-chart">
+                    <div class="chart-bars">
+                        <div class="bar" style="height: 25%;">
+                            <div class="bar-label">115-120</div>
+                        </div>
+                        <div class="bar" style="height: 40%;">
+                            <div class="bar-label">120-125</div>
+                        </div>
+                        <div class="bar" style="height: 65%;">
+                            <div class="bar-label">125-130</div>
+                        </div>
+                        <div class="bar" style="height: 90%;">
+                            <div class="bar-label">130-135</div>
+                        </div>
+                        <div class="bar" style="height: 85%;">
+                            <div class="bar-label">135-140</div>
+                        </div>
+                        <div class="bar" style="height: 70%;">
+                            <div class="bar-label">140-145</div>
+                        </div>
+                        <div class="bar" style="height: 45%;">
+                            <div class="bar-label">145-150</div>
+                        </div>
+                        <div class="bar" style="height: 20%;">
+                            <div class="bar-label">150+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session History -->
+            <div class="chart-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="section-title" style="margin: 0;">Recent Sessions</div>
+                    <button class="export-btn">📥 Export Data</button>
+                </div>
+                
+                <table class="session-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Deliveries</th>
+                            <th>Avg Speed</th>
+                            <th>Max Speed</th>
+                            <th>Length Quality</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Today, 4:30 PM</strong></td>
+                            <td>18</td>
+                            <td>138.2 km/h</td>
+                            <td><strong>148.7 km/h</strong> 🎉</td>
+                            <td><span class="badge excellent">Excellent</span></td>
+                            <td>25 min</td>
+                        </tr>
+                        <tr>
+                            <td>Oct 25, 5:15 PM</td>
+                            <td>22</td>
+                            <td>135.8 km/h</td>
+                            <td>142.3 km/h</td>
+                            <td><span class="badge good">Good</span></td>
+                            <td>32 min</td>
+                        </tr>
+                        <tr>
+                            <td>Oct 23, 6:00 PM</td>
+                            <td>15</td>
+                            <td>133.1 km/h</td>
+                            <td>139.5 km/h</td>
+                            <td><span class="badge good">Good</span></td>
+                            <td>20 min</td>
+                        </tr>
+                        <tr>
+                            <td>Oct 20, 4:45 PM</td>
+                            <td>19</td>
+                            <td>131.7 km/h</td>
+                            <td>137.8 km/h</td>
+                            <td><span class="badge short">Variable</span></td>
+                            <td>28 min</td>
+                        </tr>
+                        <tr>
+                            <td>Oct 18, 5:30 PM</td>
+                            <td>24</td>
+                            <td>136.4 km/h</td>
+                            <td>143.9 km/h</td>
+                            <td><span class="badge excellent">Excellent</span></td>
+                            <td>35 min</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple interactivity
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelector('.export-btn').addEventListener('click', function() {
+            alert('Export functionality:\n\n- Export as CSV (for Excel/Sheets)\n- Export as JSON (for data portability)\n- Include filters and date range\n- Privacy-safe (no PII)');
+        });
+
+        document.querySelector('.profile-selector').addEventListener('click', function() {
+            alert('Profile Selector:\n\n- Switch between profiles (Me, Player 2, etc.)\n- Create new profile\n- Each profile has independent stats\n- Good for coaches tracking multiple players');
+        });
+    </script>
+</body>
+</html>

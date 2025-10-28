@@ -56,6 +56,12 @@ export interface CameraViewProps {
    * Optional CSS class name
    */
   className?: string;
+
+  /**
+   * Reset trigger - increment this value to reset camera view state
+   * Allows parent component to trigger reset without direct state access
+   */
+  resetTrigger?: number;
 }
 
 /**
@@ -71,6 +77,7 @@ export function CameraView({
   onRecordingStart,
   onRecordingStop,
   className = '',
+  resetTrigger = 0,
 }: CameraViewProps) {
   // Camera feed hook
   const {
@@ -120,6 +127,16 @@ export function CameraView({
       stopCamera();
     };
   }, [startCamera, stopCamera]);
+
+  /**
+   * Watch for resetTrigger changes from parent
+   * Allows parent component (page.tsx) to reset this component's state
+   */
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      reset();
+    }
+  }, [resetTrigger, reset]);
 
   /**
    * Frame capture loop during recording

@@ -39,6 +39,7 @@ export default function Home() {
   const [showReplay, setShowReplay] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetTrigger, setResetTrigger] = useState(0);
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
 
@@ -114,6 +115,8 @@ export default function Home() {
     setShowReplay(false);
     setIsRecording(false);
     setError(null);
+    // Increment resetTrigger to notify CameraView to reset
+    setResetTrigger((prev) => prev + 1);
   }, []);
 
   /**
@@ -199,6 +202,7 @@ export default function Home() {
                 onAnalysisError={handleAnalysisError}
                 onRecordingStart={handleRecordingStart}
                 onRecordingStop={handleRecordingStop}
+                resetTrigger={resetTrigger}
               />
             </div>
 

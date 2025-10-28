@@ -53,6 +53,10 @@
       "completedAt": "2025-10-26",
       "completedOn": "2025-10-26T23:45:00+11:00",
       "owner": "frontend",
+      "github": {
+        "issueNumber": 15,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/15"
+      },
       "implementation": {
         "summary": "Fully implemented configurable pitch length selector with three presets (Standard 20.12m, Youth 16m, Custom 12-28m). Integrated into speed calculation pipeline. localStorage persists user selection. CSS styling fixed for both light and dark modes.",
         "status": "COMPLETE & TESTED",
@@ -226,6 +230,131 @@
       ]
     },
     {
+      "id": "T3A",
+      "name": "Survey pretrained cricket ball models & datasets",
+      "description": "Research existing YOLOv8/YOLO11 cricket ball detectors and labeled datasets; shortlist 2-3 candidates for evaluation. Capture licenses and usage constraints.",
+      "start": "2025-10-30",
+      "durationDays": 2,
+      "dependsOn": [],
+      "status": "ready",
+      "owner": "ml",
+      "github": {
+        "issueNumber": 21,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/21"
+      },
+      "deliverables": [
+        "Shortlist with links, license, image count, resolution, class schema",
+        "Download scripts or instructions for each candidate"
+      ],
+      "acceptanceCriteria": [
+        "At least 2 candidate models/datasets identified",
+        "Licenses allow evaluation and internal use",
+        "Downloadable in YOLO format or convertible"
+      ],
+      "references": [
+        "Ultralytics Detect Docs: https://docs.ultralytics.com/tasks/detect/",
+        "Roboflow Universe search: https://universe.roboflow.com/search?q=cricket%20ball",
+        "GitHub example: https://github.com/irfan092-ai/cricket-ball-detection-yolov8",
+        "GitHub trajectory+YOLO pipeline: https://github.com/HiteshDereddy/RAIE-Transformer"
+      ]
+    },
+    {
+      "id": "T3B",
+      "name": "Benchmark pretrained candidates on sample clips",
+      "description": "Run 2-3 shortlisted detectors on our sample clips. Measure precision/recall for ball frames, FPS on target device, and robustness to motion blur/lighting.",
+      "start": "2025-11-01",
+      "durationDays": 1,
+      "dependsOn": ["T3A"],
+      "status": "planned",
+      "owner": "ml",
+      "github": {
+        "issueNumber": 22,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/22"
+      },
+      "deliverables": [
+        "Benchmark report (precision/recall/FPS)",
+        "Qualitative notes on failure modes (small ball, occlusion, motion blur)",
+        "Recommendation: use-best or train-our-own"
+      ],
+      "acceptanceCriteria": [
+        "Report includes at least 3 representative clips",
+        "Measurements captured on target device (or closest available)",
+        "Clear go/no-go recommendation"
+      ]
+    },
+    {
+      "id": "T3C",
+      "name": "Dataset plan: capture, labeling & augmentation",
+      "description": "If no suitable pretrained model, define dataset scope (clips, angles, lighting), labeling tooling, class schema (ball only), and augmentation strategy tuned for small, fast objects.",
+      "start": "2025-11-02",
+      "durationDays": 3,
+      "dependsOn": ["T3B"],
+      "status": "planned",
+      "owner": "ml",
+      "github": {
+        "issueNumber": 23,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/23"
+      },
+      "deliverables": [
+        "Data plan (N clips, devices, fps, resolution)",
+        "Labeling workflow (Roboflow/CVAT) + guidelines",
+        "Augmentations: motion blur, brightness/contrast, random crop, scale-up small objects"
+      ],
+      "acceptanceCriteria": [
+        "Labeling guideline doc with examples",
+        "YOLO dataset yaml scaffold created",
+        "At least 500 labeled images (if proceeding) or sourced from 3rd-party dataset"
+      ]
+    },
+    {
+      "id": "T3D",
+      "name": "Train YOLOv8/YOLO11 detector and export ONNX",
+      "description": "Train small-object-tuned model (n/s) at imgsz 960–1280 with appropriate augmentations. Validate mAP and recall on holdout clips. Export to ONNX for onnxruntime-web.",
+      "start": "2025-11-05",
+      "durationDays": 3,
+      "dependsOn": ["T3C"],
+      "status": "planned",
+      "owner": "ml",
+      "github": {
+        "issueNumber": 24,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/24"
+      },
+      "deliverables": [
+        "best.pt (PyTorch) + best.onnx (opset>=17)",
+        "Training logs and validation metrics",
+        "Export notes: dynamic axes compatibility for web runtime"
+      ],
+      "acceptanceCriteria": [
+        "Recall >= 0.85 on ball-present frames on holdout",
+        "Throughput suitable for 30 FPS at 720p on target device (or acceptable sampling)",
+        "ONNX loads with onnxruntime-web in a minimal harness"
+      ]
+    },
+    {
+      "id": "T3E",
+      "name": "Integrate model and evaluate in app",
+      "description": "Wire new ONNX model into detection adapter. Tune confidence/NMS thresholds. Validate full delivery flow and speed accuracy.",
+      "start": "2025-11-08",
+      "durationDays": 1,
+      "dependsOn": ["T3D"],
+      "status": "planned",
+      "owner": "frontend",
+      "github": {
+        "issueNumber": 25,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/25"
+      },
+      "deliverables": [
+        "Model file in /public or CDN with versioning",
+        "Adapter config for thresholds and input size",
+        "Integration tests against mock + real clips"
+      ],
+      "acceptanceCriteria": [
+        "Delivery flow latency <5s",
+        "Speed within tolerance vs ground truth on sample clips",
+        "No regressions in existing 541 tests"
+      ]
+    },
+    {
       "id": "T7",
       "name": "Mobile Testing via ngrok (HTTPS tunnel)",
       "description": "Enable mobile access to the dev server using an HTTPS tunnel via ngrok to satisfy getUserMedia camera requirements and allow remote testers to use the app from phones.",
@@ -270,6 +399,10 @@
       "completedAt": "2025-10-26",
       "completedOn": "2025-10-26T18:30:00+11:00",
       "owner": "fullstack",
+      "github": {
+        "issueNumber": 16,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/16"
+      },
       "implementation": {
         "summary": "Fully implemented configurable ball weight selector with two presets (Standard 156g, Youth/Women's 135g, Custom 50-300g). Integrated into calibration, physics calculations (smoothing & warnings). localStorage persists selection.",
         "status": "COMPLETE & TESTED"
@@ -395,8 +528,12 @@
       "start": "2025-10-26",
       "durationDays": 1,
       "dependsOn": ["T1", "T2"],
-  "status": "completed",
+      "status": "completed",
       "owner": "frontend",
+      "github": {
+        "issueNumber": 19,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/19"
+      },
       "deliverables": [
         "MockDetector returns null on blank frames and deterministic detections otherwise",
         "Actionable error messages in analyzeDelivery for insufficient inputs",
@@ -457,6 +594,10 @@
       "completedAt": "2025-10-26",
       "completedOn": "2025-10-26T23:55:00+11:00",
       "owner": "frontend",
+      "github": {
+        "issueNumber": 17,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/17"
+      },
       "implementation": {
         "summary": "Fully implemented camera diagnostics system with FPS inference, exposure detection via brightness analysis, and automated guidance UI. Integrates with warning system to flag camera issues alongside detection quality problems.",
         "status": "COMPLETE & TESTED",
@@ -618,6 +759,10 @@
       "completedAt": "2025-10-27",
       "completedOn": "2025-10-27T16:30:00+11:00",
       "owner": "frontend",
+      "github": {
+        "issueNumber": 18,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/18"
+      },
       "epic": {
         "id": "Epic 2",
         "title": "Ball Tracking Recording & Replay User Flow",
@@ -854,6 +999,10 @@
       "completedAt": "2025-10-27",
       "completedOn": "2025-10-27T22:30:00+11:00",
       "owner": "frontend",
+      "github": {
+        "issueNumber": 11,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/11"
+      },
       "epic": {
         "id": "Epic 2",
         "title": "Ball Tracking Recording & Replay User Flow",
@@ -1095,6 +1244,122 @@
       }
     },
     {
+      "id": "T11",
+      "name": "Fix: 'New Delivery' button should reset camera feed state",
+      "description": "BUG FIX: When user clicks 'New Delivery' button in header, camera feed should clear previous delivery information and return to ready state. Currently the CameraView component retains old result overlay because useInference state is not reset.",
+      "start": "2025-10-27",
+      "durationDays": 0.25,
+      "dependsOn": [],
+      "status": "ready",
+      "priority": "high",
+      "owner": "frontend",
+      "type": "bug",
+      "reportedBy": "user",
+      "reportedOn": "2025-10-27",
+      "github": {
+        "issueNumber": 20,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/20"
+      },
+      "epic": {
+        "id": "Epic 2",
+        "title": "Ball Tracking Recording & Replay User Flow",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/10"
+      },
+      "bugDetails": {
+        "severity": "medium",
+        "impact": "User confusion - previous delivery data persists visually when starting new recording",
+        "reproducibility": "100%",
+        "stepsToReproduce": [
+          "1. Record and analyze a delivery successfully",
+          "2. Click 'New Delivery' button in the header",
+          "3. Observe: Camera feed still shows old result overlay",
+          "4. Expected: Camera feed should reset to 'Ready' state"
+        ],
+        "rootCause": "page.tsx handleReset() only clears page-level state (currentResult, replaySession) but doesn't trigger CameraView's internal useInference.reset()",
+        "workaround": "Click 'Record Next Delivery' button in the CameraView result overlay instead"
+      },
+      "implementation": {
+        "approach": "Add reset trigger mechanism from parent to CameraView",
+        "options": [
+          {
+            "id": "Option A",
+            "name": "Add onReset callback prop",
+            "pros": ["Clean API", "Explicit control flow"],
+            "cons": ["Adds prop drilling"],
+            "recommended": false
+          },
+          {
+            "id": "Option B",
+            "name": "Use key prop to force remount",
+            "pros": ["Simple", "No new props", "Complete reset"],
+            "cons": ["Heavy-handed", "Loses camera stream"],
+            "recommended": false
+          },
+          {
+            "id": "Option C",
+            "name": "Add resetTrigger prop with useEffect watcher",
+            "pros": ["Clean", "Explicit", "No remount needed"],
+            "cons": ["Slightly more complex"],
+            "recommended": true
+          },
+          {
+            "id": "Option D",
+            "name": "Expose reset via useImperativeHandle + ref",
+            "pros": ["Direct control", "No prop changes"],
+            "cons": ["Less React-idiomatic", "Refs complexity"],
+            "recommended": false
+          }
+        ],
+        "selectedApproach": "Option C - resetTrigger prop with useEffect watcher"
+      },
+      "deliverables": [
+        {
+          "id": "D-001",
+          "name": "Add resetTrigger prop to CameraView",
+          "status": "planned",
+          "files": [
+            "frontend/src/components/CameraView.tsx - Add resetTrigger prop and useEffect to watch it"
+          ]
+        },
+        {
+          "id": "D-002",
+          "name": "Update page.tsx to pass resetTrigger",
+          "status": "planned",
+          "files": [
+            "frontend/src/app/page.tsx - Add resetTrigger state and increment on handleReset()"
+          ]
+        },
+        {
+          "id": "D-003",
+          "name": "Add test for reset behavior",
+          "status": "planned",
+          "files": [
+            "frontend/src/tests/integration/newDeliveryReset.int.test.tsx - Verify camera state clears"
+          ]
+        }
+      ],
+      "acceptanceCriteria": [
+        "Clicking 'New Delivery' button clears CameraView result overlay",
+        "Camera feed returns to 'Ready' state with guidance visible",
+        "Previous delivery data is no longer visible in CameraView",
+        "Recording state is properly reset (frameCount = 0)",
+        "No errors in console",
+        "Camera stream continues without interruption"
+      ],
+      "likelyFiles": [
+        "frontend/src/components/CameraView.tsx",
+        "frontend/src/app/page.tsx",
+        "frontend/src/tests/integration/newDeliveryReset.int.test.tsx"
+      ],
+      "estimatedEffort": "2 hours (1.5h implementation + 0.5h testing)",
+      "testingNotes": [
+        "Test both 'New Delivery' button in header AND 'Record Next Delivery' in overlay",
+        "Verify camera stream doesn't restart (no black flash)",
+        "Check all state is cleared: result, error, frameCount, progress",
+        "Test with successful delivery, failed delivery, and error states"
+      ]
+    },
+    {
       "id": "T10",
       "name": "Hybrid Auto-Stop - Detect Ball Exit Automatically",
       "description": "Fully automate STOP button by detecting when ball disappears from frame for 30 consecutive frames. Manual START + automatic STOP workflow. Immediately triggers smart trim analysis.",
@@ -1106,7 +1371,7 @@
       "epic": {
         "id": "Epic 3",
         "title": "Future Enhancements",
-        "url": "TBD",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/12",
         "description": "Advanced automation features for future releases"
       },
       "implementation": {
@@ -1205,6 +1470,158 @@
         "frontend/src/tests",
         "python/tests",
         "TESTING_CHECKLIST.md"
+      ]
+    }
+    ,
+    {
+      "id": "T12",
+      "name": "Player Stats – Backend API & Database",
+      "description": "Build FastAPI endpoints for saving deliveries and retrieving stats. SQLite/PostgreSQL schema with device key auth. Server is source of truth for all historical data.",
+      "start": "2025-11-24",
+      "durationDays": 1,
+      "dependsOn": [],
+      "status": "planned",
+      "owner": "backend",
+      "github": {
+        "issueNumber": 26,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/26"
+      },
+      "epic": {
+        "id": "Epic 4",
+        "title": "Player Statistics Tracking",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/14",
+        "description": "Mobile-first player stats with offline queue and server-side analytics"
+      },
+      "deliverables": [
+        "Database schema: players, deliveries, sessions tables",
+        "API endpoints: POST /deliveries, GET /stats, GET /sessions",
+        "Device key authentication middleware",
+        "SQL aggregation queries (avg, max, distribution)",
+        "UUID deduplication to prevent duplicate saves"
+      ],
+      "acceptanceCriteria": [
+        "Can save delivery with device key auth",
+        "Stats endpoint returns aggregates in <100ms",
+        "Handles 1000+ deliveries per player without performance degradation",
+        "Device key creates/links to player automatically",
+        "Duplicate delivery IDs rejected gracefully"
+      ],
+      "references": [
+        "FastAPI docs: https://fastapi.tiangolo.com/",
+        "SQLAlchemy ORM for Python",
+        "PostgreSQL for production or SQLite for MVP"
+      ]
+    },
+    {
+      "id": "T13",
+      "name": "Player Stats – Mobile Offline Queue",
+      "description": "Implement localStorage-based queue for offline recording. Background sync when device comes online. PWA service worker integration.",
+      "start": "2025-11-25",
+      "durationDays": 0.5,
+      "dependsOn": ["T12"],
+      "status": "planned",
+      "owner": "frontend",
+      "github": {
+        "issueNumber": 27,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/27"
+      },
+      "epic": {
+        "id": "Epic 4",
+        "title": "Player Statistics Tracking",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/14"
+      },
+      "deliverables": [
+        "OfflineQueue class with enqueue/sync/status methods",
+        "localStorage persistence (max 30 deliveries, ~21 KB)",
+        "Service Worker with Background Sync API",
+        "Retry logic with exponential backoff (max 3 attempts)",
+        "UI sync indicator component showing pending/failed count"
+      ],
+      "acceptanceCriteria": [
+        "Deliveries queued when offline or server unavailable",
+        "Auto-sync on 'online' event and app open",
+        "Background Sync works in Chrome/Edge (progressive enhancement)",
+        "Queue auto-trims to 30 items if exceeded",
+        "User sees clear feedback: 'X deliveries pending sync'",
+        "Failed syncs show retry button"
+      ],
+      "references": [
+        "Background Sync API: https://developer.mozilla.org/en-US/docs/Web/API/Background_Synchronization_API",
+        "Service Worker guide: https://web.dev/service-workers/"
+      ]
+    },
+    {
+      "id": "T14",
+      "name": "Player Stats – Frontend Dashboard & Charts",
+      "description": "Build stats UI with Recharts: overview cards, speed trend line chart, distribution histogram, session history table. Responsive mobile-first design.",
+      "start": "2025-11-26",
+      "durationDays": 1,
+      "dependsOn": ["T12"],
+      "status": "planned",
+      "owner": "frontend",
+      "github": {
+        "issueNumber": 28,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/28"
+      },
+      "epic": {
+        "id": "Epic 4",
+        "title": "Player Statistics Tracking",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/14"
+      },
+      "deliverables": [
+        "usePlayerStats hook (fetch from server, cache in localStorage)",
+        "Stats overview cards (avg speed, max, total, consistency)",
+        "Speed trend chart (Recharts line chart, last 7/30/90 days)",
+        "Distribution histogram (8 speed buckets)",
+        "Session history table (sortable, filterable)",
+        "Date range filters",
+        "Mobile-responsive layout"
+      ],
+      "acceptanceCriteria": [
+        "Stats load in <500ms (with cached data shown immediately)",
+        "Charts render smoothly on mobile (60fps)",
+        "Filters update charts reactively",
+        "Works offline with cached stats (shows indicator)",
+        "Recharts bundle adds <25KB gzipped",
+        "Matches mockup design (docs/player-stats-mockup.html)"
+      ],
+      "references": [
+        "Recharts: https://recharts.org/",
+        "Mockup: docs/player-stats-mockup.html"
+      ]
+    },
+    {
+      "id": "T15",
+      "name": "Player Stats – Export & Privacy",
+      "description": "Export CSV/JSON, privacy controls, clear data option. Ensure user owns their data and can migrate between devices.",
+      "start": "2025-11-27",
+      "durationDays": 0.5,
+      "dependsOn": ["T13", "T14"],
+      "status": "planned",
+      "owner": "fullstack",
+      "github": {
+        "issueNumber": 29,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/29"
+      },
+      "epic": {
+        "id": "Epic 4",
+        "title": "Player Statistics Tracking",
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/14"
+      },
+      "deliverables": [
+        "Export button: CSV (Excel-compatible) and JSON formats",
+        "Import: Upload previously exported JSON to restore data",
+        "Settings UI: clear all data, manage device key",
+        "Privacy notice (inline, no external policy needed for MVP)",
+        "QR code generator for device key (optional desktop login)"
+      ],
+      "acceptanceCriteria": [
+        "CSV export includes all deliveries with headers",
+        "JSON export includes full data model (for backup/restore)",
+        "Import validates JSON schema before restoring",
+        "Clear data shows confirmation dialog and purges localStorage + server data",
+        "Device key visible and copyable in settings",
+        "No analytics or telemetry without explicit opt-in"
       ]
     }
   ]
