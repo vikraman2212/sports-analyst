@@ -15,9 +15,18 @@ export interface CameraSettingsProps {
 }
 
 export function CameraSettings({ stream, onClose }: CameraSettingsProps) {
-  const { capabilities, currentSettings, applyPreset, isSupported, error } =
-    useCameraSettings(stream);
+  const {
+    capabilities,
+    currentSettings,
+    applyPreset,
+    applyBasicSettings,
+    isSupported,
+    hasAdvancedControls,
+    error,
+  } = useCameraSettings(stream);
   const [applying, setApplying] = useState(false);
+  const [selectedResolution, setSelectedResolution] = useState<string>('720p');
+  const [selectedFPS, setSelectedFPS] = useState<number>(30);
 
   const handlePreset = async (preset: 'auto' | 'fast-motion') => {
     setApplying(true);
@@ -28,6 +37,28 @@ export function CameraSettings({ stream, onClose }: CameraSettingsProps) {
       // Show feedback
       setTimeout(onClose, 1000);
     }
+  };
+
+  const handleResolutionChange = async (resolution: string) => {
+    setSelectedResolution(resolution);
+    setApplying(true);
+
+    const resolutionMap: Record<string, { width: number; height: number }> = {
+      '480p': { width: 640, height: 480 },
+      '720p': { width: 1280, height: 720 },
+      '1080p': { width: 1920, height: 1080 },
+    };
+
+    const { width, height } = resolutionMap[resolution] || resolutionMap['720p'];
+    await applyBasicSettings({ width, height });
+    setApplying(false);
+  };
+
+  const handleFPSChange = async (fps: number) => {
+    setSelectedFPS(fps);
+    setApplying(true);
+    await applyBasicSettings({ frameRate: fps });
+    setApplying(false);
   };
 
   if (!stream) {
@@ -80,48 +111,92 @@ export function CameraSettings({ stream, onClose }: CameraSettingsProps) {
         </div>
       )}
 
-      <div className="space-y-4">
-        {/* Current settings display */}
-        <div className="text-sm text-white/70 space-y-1">
-          <p className="font-medium text-white mb-2">Current Settings:</p>
-          {currentSettings?.exposureMode && (
-            <p>Exposure: {currentSettings.exposureMode}</p>
-          )}
-          {currentSettings?.exposureTime && (
-            <p>Shutter: {(currentSettings.exposureTime / 1000).toFixed(1)}ms</p>
-          )}
-          {currentSettings?.iso && <p>ISO: {currentSettings.iso}</p>}
-          {currentSettings?.focusMode && <p>Focus: {currentSettings.focusMode}</p>}
+            <div className="space-y-4">
+        {/* Mobile-friendly basic controls */}
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-white">Basic Settings:</p>
+
+          {/* Resolution selector */}
+          <div>
+            <label className="text-xs text-white/70 block mb-1">Resolution</label>
+            <select
+              value={selectedResolution}
+              onChange={(e) => handleResolutionChange(e.target.value)}
+              disabled={applying}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white disabled:opacity-50"
+            >
+              <option value="480p">480p (640x480)</option>
+              <option value="720p">720p (1280x720)</option>
+              <option value="1080p">1080p (1920x1080)</option>
+            </select>
+          </div>
+
+          {/* FPS selector */}
+          <div>
+            <label className="text-xs text-white/70 block mb-1">Frame Rate</label>
+            <select
+              value={selectedFPS}
+              onChange={(e) => handleFPSChange(Number(e.target.value))}
+              disabled={applying}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white disabled:opacity-50"
+            >
+              <option value={15}>15 FPS</option>
+              <option value={24}>24 FPS</option>
+              <option value={30}>30 FPS</option>
+              <option value={60}>60 FPS</option>
+            </select>
+          </div>
         </div>
 
-        {/* Preset buttons */}
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-white">Presets:</p>
+        {/* Advanced controls (desktop only) */}
+        {hasAdvancedControls && (
+          <div className="space-y-3 pt-4 border-t border-white/20">
+            <p className="text-sm font-medium text-white">Advanced Presets:</p>
 
-          <button
-            onClick={() => handlePreset('auto')}
-            disabled={applying}
-            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded transition-colors text-left"
-          >
-            <div className="font-medium">Auto (Default)</div>
-            <div className="text-xs text-white/80">
-              Automatic exposure, focus, and white balance
+            {/* Current settings display */}
+            <div className="text-xs text-white/60 space-y-1">
+              {currentSettings?.exposureMode && (
+                <p>Exposure: {currentSettings.exposureMode}</p>
+              )}
+              {currentSettings?.exposureTime && (
+                <p>Shutter: {(currentSettings.exposureTime / 1000).toFixed(1)}ms</p>
+              )}
+              {currentSettings?.iso && <p>ISO: {currentSettings.iso}</p>}
+              {currentSettings?.focusMode && <p>Focus: {currentSettings.focusMode}</p>}
             </div>
-          </button>
 
-          {capabilities?.exposureMode?.includes('manual') && (
             <button
-              onClick={() => handlePreset('fast-motion')}
+              onClick={() => handlePreset('auto')}
               disabled={applying}
-              className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white rounded transition-colors text-left"
+              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded transition-colors text-left"
             >
-              <div className="font-medium">Fast Motion</div>
+              <div className="font-medium">Auto (Default)</div>
               <div className="text-xs text-white/80">
-                Fast shutter, manual focus - optimized for ball tracking
+                Automatic exposure, focus, and white balance
               </div>
             </button>
-          )}
-        </div>
+
+            {capabilities?.exposureMode?.includes('manual') && (
+              <button
+                onClick={() => handlePreset('fast-motion')}
+                disabled={applying}
+                className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white rounded transition-colors text-left"
+              >
+                <div className="font-medium">Fast Motion</div>
+                <div className="text-xs text-white/80">
+                  Fast shutter, manual focus - optimized for ball tracking
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+
+        {!hasAdvancedControls && (
+          <div className="text-xs text-yellow-400/80 bg-yellow-500/10 p-3 rounded border border-yellow-500/20">
+            ℹ️ Advanced camera controls (exposure, ISO, focus) are not available on this device.
+            Only basic resolution and frame rate can be adjusted.
+          </div>
+        )}
 
         {applying && (
           <p className="text-sm text-cyan-400 text-center">Applying settings...</p>

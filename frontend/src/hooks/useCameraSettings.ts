@@ -1,6 +1,9 @@
 /**
  * Hook for managing camera settings via MediaStreamTrack API
  * Detects capabilities and applies constraints for exposure, ISO, focus, etc.
+ * 
+ * IMPORTANT: Advanced controls (exposure, ISO, focus) are only available on desktop Chrome.
+ * Mobile browsers only support basic constraints (resolution, frameRate, facingMode).
  */
 
 'use client';
@@ -8,12 +11,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { CameraConstraints, CameraCapabilities } from '@/lib/types';
 
+export interface BasicCameraSettings {
+  width?: number;
+  height?: number;
+  frameRate?: number;
+  facingMode?: 'user' | 'environment';
+}
+
 export interface UseCameraSettingsReturn {
   capabilities: CameraCapabilities | null;
   currentSettings: CameraConstraints | null;
   applySettings: (settings: CameraConstraints) => Promise<boolean>;
   applyPreset: (preset: 'auto' | 'fast-motion') => Promise<boolean>;
+  applyBasicSettings: (settings: BasicCameraSettings) => Promise<boolean>;
   isSupported: boolean;
+  hasAdvancedControls: boolean;
   error: string | null;
 }
 
@@ -212,14 +224,60 @@ export function useCameraSettings(
     return false;
   }, [capabilities, applySettings]);
 
+  /**
+   * Apply basic camera settings (mobile-compatible)
+   * These work on both desktop and mobile browsers
+   */
+  const applyBasicSettings = useCallback(async (settings: BasicCameraSettings): Promise<boolean> => {
+    const track = trackRef.current;
+    if (!track) {
+      setError('No video track available');
+      return false;
+    }
+
+    try {
+      // Build constraints for basic settings
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const constraints: any = { advanced: [{}] };
+
+      if (settings.width) {
+        constraints.advanced[0].width = { ideal: settings.width };
+      }
+      if (settings.height) {
+        constraints.advanced[0].height = { ideal: settings.height };
+      }
+      if (settings.frameRate) {
+        constraints.advanced[0].frameRate = { ideal: settings.frameRate };
+      }
+      if (settings.facingMode) {
+        constraints.advanced[0].facingMode = { ideal: settings.facingMode };
+      }
+
+      await track.applyConstraints(constraints);
+      setError(null);
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to apply camera settings';
+      setError(message);
+      return false;
+    }
+  }, []);
+
   const isSupported = capabilities !== null;
+  
+  // Advanced controls (exposure, ISO, focus) are typically only available on desktop Chrome
+  const hasAdvancedControls = Boolean(
+    capabilities?.exposureMode || capabilities?.exposureTime || capabilities?.iso || capabilities?.focusMode
+  );
 
   return {
     capabilities,
     currentSettings,
     applySettings,
     applyPreset,
+    applyBasicSettings,
     isSupported,
+    hasAdvancedControls,
     error,
   };
 }

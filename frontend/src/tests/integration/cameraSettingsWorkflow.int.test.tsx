@@ -206,4 +206,68 @@ describe('Camera Settings Workflow Integration', () => {
     // Settings should be updated (verified by the mock being called)
     expect(mockTrack.applyConstraints).toHaveBeenCalled();
   });
+
+  it('should apply basic camera settings (mobile-compatible)', async () => {
+    const { result } = renderHook(() => useCameraSettings(mockStream));
+
+    const basicSettings = {
+      width: 1920,
+      height: 1080,
+      frameRate: 60,
+    };
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.applyBasicSettings(basicSettings);
+    });
+
+    expect(success).toBe(true);
+    expect(mockTrack.applyConstraints).toHaveBeenCalled();
+
+    // Verify basic constraints were applied
+    const constraintsCall = (mockTrack.applyConstraints as jest.Mock).mock.calls[0][0];
+    expect(constraintsCall.advanced).toBeDefined();
+    expect(constraintsCall.advanced[0].width).toEqual({ ideal: 1920 });
+    expect(constraintsCall.advanced[0].height).toEqual({ ideal: 1080 });
+    expect(constraintsCall.advanced[0].frameRate).toEqual({ ideal: 60 });
+  });
+
+  it('should detect when advanced controls are available', () => {
+    const { result } = renderHook(() => useCameraSettings(mockStream));
+
+    // Our mock has exposure and ISO capabilities
+    expect(result.current.hasAdvancedControls).toBe(true);
+  });
+
+  it('should detect when advanced controls are NOT available (mobile)', () => {
+    // Create mock without advanced capabilities (typical mobile browser)
+    const mobileTrack = {
+      kind: 'video',
+      enabled: true,
+      getCapabilities: jest.fn(() => ({
+        width: { min: 640, max: 1920 },
+        height: { min: 480, max: 1080 },
+        frameRate: { min: 15, max: 30 },
+        facingMode: ['user', 'environment'],
+      })),
+      getSettings: jest.fn(() => ({
+        width: 1280,
+        height: 720,
+        frameRate: 30,
+        facingMode: 'environment',
+      })),
+      applyConstraints: jest.fn().mockResolvedValue(undefined),
+    } as unknown as MediaStreamTrack;
+
+    const mobileStream = {
+      getVideoTracks: jest.fn(() => [mobileTrack]),
+      getTracks: jest.fn(() => [mobileTrack]),
+    } as unknown as MediaStream;
+
+    const { result } = renderHook(() => useCameraSettings(mobileStream));
+
+    // Mobile browser should not have advanced controls
+    expect(result.current.hasAdvancedControls).toBe(false);
+    expect(result.current.isSupported).toBe(true);
+  });
 });
