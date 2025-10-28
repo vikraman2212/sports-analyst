@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback, type MouseEvent, type TouchEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, type MouseEvent, type TouchEvent } from 'react';
 import type { CalibrationPoint } from '@/lib/types';
 import {
   calculatePixelDistance,
@@ -32,6 +32,18 @@ export function CameraCalibrator({
 
   const videoWidth = videoRef.current?.videoWidth || 0;
   const videoHeight = videoRef.current?.videoHeight || 0;
+
+  // Add Escape key handler for better UX
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onCancel();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onCancel]);
 
   // Calculate pixel distance if both points are set
   const pixelDistance = point1 && point2 ? calculatePixelDistance(point1, point2) : null;
@@ -133,11 +145,12 @@ export function CameraCalibrator({
   return (
     <div
       ref={overlayRef}
-      className="absolute inset-0 z-20 cursor-crosshair"
+      className="absolute inset-0 cursor-crosshair"
+      style={{ zIndex: 'var(--z-calibration, 20)' }}
       onClick={handleClick}
       onTouchStart={handleTouch}
       role="application"
-      aria-label="Camera calibration overlay"
+      aria-label="Camera calibration overlay. Press Escape to cancel"
     >
       {/* Semi-transparent overlay */}
       <div className="absolute inset-0 bg-black/40" />
@@ -145,6 +158,7 @@ export function CameraCalibrator({
       {/* Instructions */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-4 rounded-lg text-center max-w-md">
         <h3 className="font-semibold text-lg mb-2">Camera Calibration</h3>
+        <p className="text-xs text-gray-300 mb-2">Press ESC to cancel</p>
         {!point1 && (
           <p className="text-sm">
             <span className="font-medium">Step 1:</span> Tap the <strong>bowling crease</strong> (where bowler releases ball)

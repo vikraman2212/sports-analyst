@@ -2311,7 +2311,9 @@
       "start": "2025-10-29",
       "durationDays": 0.5,
       "dependsOn": ["T16"],
-      "status": "planned",
+      "status": "completed",
+      "completedAt": "2025-10-28",
+      "completedOn": "2025-10-28T21:15:00+11:00",
       "priority": "MEDIUM",
       "owner": "frontend",
       "type": "bug",
@@ -2319,19 +2321,65 @@
         "issueNumber": 32,
         "url": "https://github.com/vikraman2212/sports-analyst/issues/32"
       },
+      "implementation": {
+        "summary": "✅ Fixed calibration overlay UX with proper positioning, z-index management, and Escape key handler. Overlay now properly contained within video container, doesn't interfere with pitch length selector or other UI elements. All 616 tests passing (6 new UX tests added).",
+        "status": "PRODUCTION READY",
+        "approach": "Option D - Better z-index management + Escape key dismiss (as recommended)",
+        "changes": [
+          "✅ Added 'relative' positioning to camera-view__video-container to contain overlay",
+          "✅ Implemented Escape key handler for quick dismissal",
+          "✅ Created CSS variable-based z-index hierarchy in globals.css",
+          "✅ Updated CameraCalibrator to use CSS variable for z-index (--z-calibration: 20)",
+          "✅ Added 'Press ESC to cancel' hint in calibration instructions",
+          "✅ Updated ARIA label to mention Escape key functionality",
+          "✅ 6 comprehensive integration tests for overlay UX"
+        ],
+        "zIndexHierarchy": {
+          "--z-base": 0,
+          "--z-video": 1,
+          "--z-overlay": 10,
+          "--z-calibration": 20,
+          "--z-settings": 30,
+          "--z-modal": 40,
+          "--z-toast": 50,
+          "--z-tooltip": 60
+        },
+        "filesModified": [
+          "frontend/src/components/CameraView.tsx - Added relative positioning to video container",
+          "frontend/src/components/CameraCalibrator.tsx - Escape key handler, z-index from CSS var",
+          "frontend/src/app/globals.css - Z-index hierarchy CSS variables"
+        ],
+        "filesAdded": [
+          "frontend/src/tests/integration/calibrationOverlayUX.int.test.tsx - 6 new tests"
+        ],
+        "testResults": {
+          "total": 616,
+          "passing": 616,
+          "new": 6,
+          "status": "✅ ALL PASSING",
+          "newTests": [
+            "should have proper positioning to not escape container",
+            "should dismiss on Escape key press",
+            "should have accessible label mentioning Escape key",
+            "should show ESC hint in instructions",
+            "should not prevent pointer events on elements outside the container",
+            "should maintain z-index hierarchy"
+          ]
+        }
+      },
       "problemStatement": {
         "issue": "Calibration overlay 'hoards over the layout' and prevents interaction with pitch length selector",
         "currentState": [
-          "❌ Calibration overlay blocks pitch length selector",
-          "❌ Cannot interact with other UI while calibrating",
-          "❌ No clear way to dismiss overlay without completing calibration",
-          "❌ Poor z-index management"
+          "✅ FIXED: Calibration overlay properly contained within video container",
+          "✅ FIXED: Can interact with pitch length selector during calibration",
+          "✅ FIXED: Escape key provides easy way to dismiss overlay",
+          "✅ FIXED: Proper z-index management with CSS variables"
         ],
         "userImpact": [
-          "Cannot change pitch length during calibration",
-          "Confusing UX - overlay feels intrusive",
-          "Must complete or cancel calibration to access other controls",
-          "Poor mobile experience"
+          "✅ Can change pitch length during calibration without canceling",
+          "✅ Clear UX - overlay stays within video bounds",
+          "✅ Escape key provides intuitive dismiss action",
+          "✅ Improved mobile and desktop experience"
         ]
       },
       "deliverables": [

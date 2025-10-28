@@ -7,14 +7,17 @@ The app uses a **progressive fallback strategy** to maximize camera quality whil
 ## FPS Preference Order
 
 ### 1. **Default Preference: 60 FPS**
+
 - Modern high-end devices (Pixel 9 Pro, iPhone 13+, etc.)
 - Provides smoother tracking for fast-moving cricket balls
 
 ### 2. **Fallback: Device Maximum**
+
 - Mid-range devices that support 30-45 FPS
 - Older devices limited to 30 FPS
 
 ### 3. **Minimum: Device Default**
+
 - Any working camera (usually 15-30 FPS minimum)
 
 ## Implementation Strategy
@@ -50,6 +53,7 @@ The `useCameraFeed` hook tries constraints in this order:
 ## User Control
 
 Users can adjust FPS via Camera Settings:
+
 - **60 FPS** - High-end devices only
 - **30 FPS** - All devices (recommended minimum for ball tracking)
 - **24 FPS** - Low-end devices
@@ -65,6 +69,7 @@ Camera: camera2 0, facing back (facing: environment, requested: environment)
 ```
 
 If requested FPS not achieved:
+
 ```
 ⚠️ Requested 60 FPS but got 30 FPS - device limitation
 ```
@@ -78,12 +83,12 @@ If requested FPS not achieved:
 
 ## Device Testing Results
 
-| Device | Max FPS | Strategy Used |
-|--------|---------|---------------|
-| Pixel 9 Pro | 60 FPS | Exact constraints ✅ |
-| iPhone 13+ | 60 FPS | Exact constraints ✅ |
-| Mid-range Android | 30 FPS | Ideal constraints ✅ |
-| Older devices | 15-30 FPS | Minimal constraints ✅ |
+| Device            | Max FPS   | Strategy Used          |
+| ----------------- | --------- | ---------------------- |
+| Pixel 9 Pro       | 60 FPS    | Exact constraints ✅   |
+| iPhone 13+        | 60 FPS    | Exact constraints ✅   |
+| Mid-range Android | 30 FPS    | Ideal constraints ✅   |
+| Older devices     | 15-30 FPS | Minimal constraints ✅ |
 
 ## Future Improvements
 

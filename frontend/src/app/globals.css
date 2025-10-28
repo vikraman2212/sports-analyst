@@ -3,6 +3,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Z-index hierarchy for consistent layering */
+  --z-base: 0;
+  --z-video: 1;
+  --z-overlay: 10;
+  --z-calibration: 20;
+  --z-settings: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+  --z-tooltip: 60;
 }
 
 @theme inline {

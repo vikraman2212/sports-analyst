@@ -285,8 +285,8 @@ export function CameraView({
 
   return (
     <div className={`camera-view ${className}`}>
-      {/* Video Container */}
-      <div className="camera-view__video-container" role="region" aria-label="Cricket ball camera view">
+      {/* Video Container - relative positioning to contain absolute overlays */}
+      <div className="camera-view__video-container relative" role="region" aria-label="Cricket ball camera view">
         <video
           ref={videoRef}
           className="camera-view__video"
