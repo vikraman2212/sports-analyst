@@ -1,24 +1,71 @@
+# Cricket Ball Speed Tracker - Frontend
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
+### Development Server
+
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Mobile Testing
+
+To test on mobile devices (iOS/Android), you'll need HTTPS for camera access. Use ngrok to create an HTTPS tunnel:
+
+```bash
+# In a new terminal (while dev server is running)
+ngrok http 3000
+```
+
+Then open the HTTPS URL (e.g., `https://abc123.ngrok-free.app`) on your mobile device.
+
+📱 **See [docs/mobile-testing.md](../docs/mobile-testing.md) for complete mobile testing guide**
+
+## Testing
+
+Run the test suite:
+
+```bash
+pnpm test
+```
+
+Run tests in watch mode:
+
+```bash
+pnpm test:watch
+```
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # React components
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility functions and types
+│   │   ├── calibration/  # Camera calibration
+│   │   ├── detection/    # Ball detection (ONNX)
+│   │   ├── export/       # Data export utilities
+│   │   ├── replay/       # Trajectory replay
+│   │   └── speed-calculation/ # Speed analysis
+│   ├── styles/           # Global styles
+│   └── tests/            # Unit and integration tests
+│       ├── unit/
+│       ├── integration/
+│       ├── contract/
+│       └── perf/
+├── public/               # Static assets
+└── package.json
+```
 
 ## Learn More
 
