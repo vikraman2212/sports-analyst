@@ -254,7 +254,12 @@ export function useCameraSettings(
       }
 
       await track.applyConstraints(constraints);
+
+      // Update current settings after successful apply
+      const newSettings = getCurrentSettings(track);
+      setCurrentSettings(newSettings);
       setError(null);
+      
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to apply camera settings';

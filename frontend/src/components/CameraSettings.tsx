@@ -71,8 +71,13 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
       frameRate: selectedFPS 
     });
     
-    if (success && currentSettings) {
-      onSettingsChanged?.(currentSettings);
+    if (success) {
+      // Wait a bit for settings to update, then notify parent
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (currentSettings) {
+        onSettingsChanged?.(currentSettings);
+      }
       setHasPendingChanges(false);
     }
     
