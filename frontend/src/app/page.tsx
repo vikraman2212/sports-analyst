@@ -18,7 +18,7 @@ import { CalibrationStatusBadge } from '@/components/CalibrationStatusBadge';
 import { usePitchLength } from '@/hooks/usePitchLength';
 import { useBallWeight } from '@/hooks/useBallWeight';
 import { useCalibrationProfiles } from '@/hooks/useCalibrationProfiles';
-import type { DeliveryResult } from '@/lib/types';
+import type { CameraConstraints, DeliveryResult } from '@/lib/types';
 import type { ReplaySession } from '@/lib/replay/types';
 import { exportReplay } from '@/lib/export/replayExport';
 import type { ExportFormat } from '@/lib/replay/types';
@@ -53,19 +53,29 @@ export default function Home() {
   const calibration = useMemo(() => {
     // If user has performed calibration, use their measured pixels
     if (activeProfile && activeProfile.id !== 'default') {
-      // Update the profile with current pitch length and ball weight settings
       return {
         ...activeProfile,
         referenceDistanceMeters: pitchState.meters,
         ballMassGrams: ballWeightState.grams,
       };
     }
-    
-    // Otherwise use default pixels
-    if (pitchState.meters === 20.12) {
-      return createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, ballWeightState.grams);
+
+    // Otherwise use default pixels but persist stored camera metadata
+    const base = pitchState.meters === 20.12
+      ? createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, ballWeightState.grams)
+      : createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters, ballWeightState.grams);
+
+    if (!activeProfile) {
+      return base;
     }
-    return createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters, ballWeightState.grams);
+
+    return {
+      ...base,
+      id: activeProfile.id,
+      name: activeProfile.name,
+      cameraSettings: activeProfile.cameraSettings ?? base.cameraSettings,
+      deviceInfo: activeProfile.deviceInfo ?? base.deviceInfo,
+    };
   }, [activeProfile, pitchState.meters, ballWeightState.grams]);
 
   const pitchLabel = useMemo(() => (
@@ -192,12 +202,54 @@ export default function Home() {
    * Handle camera settings changed
    * Saves settings to active calibration profile (including default)
    */
-  const handleCameraSettingsChanged = useCallback((settings: import('@/lib/types').CameraConstraints) => {
-    if (activeProfile) {
-      updateProfile(activeProfile.id, {
-        cameraSettings: settings,
-      });
+  const handleCameraSettingsChanged = useCallback((settings: CameraConstraints) => {
+    // eslint-disable-next-line no-console
+    console.log('[page.tsx] handleCameraSettingsChanged CALLED. Settings:', settings);
+    // eslint-disable-next-line no-console
+    console.log('[page.tsx] activeProfile:', activeProfile);
+
+    if (!activeProfile) {
+      // eslint-disable-next-line no-console
+      console.log('[page.tsx] ERROR: No active profile, cannot save settings');
+      return;
     }
+
+    const resolution = settings.width && settings.height
+      ? `${settings.width}x${settings.height}`
+      : undefined;
+    const fps = settings.frameRate ? Math.round(settings.frameRate) : undefined;
+    const facingMode = settings.facingMode ?? activeProfile.deviceInfo?.facingMode;
+    const deviceInfo = {
+      ...(activeProfile.deviceInfo ?? {}),
+      lastUpdatedAt: new Date().toISOString(),
+    };
+
+    if (resolution) {
+      deviceInfo.resolution = resolution;
+    }
+    if (typeof fps === 'number' && !Number.isNaN(fps)) {
+      deviceInfo.fps = fps;
+    }
+    if (facingMode) {
+      deviceInfo.facingMode = facingMode;
+    }
+    if (typeof navigator !== 'undefined') {
+      deviceInfo.userAgent = navigator.userAgent;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log('[page.tsx] Calling updateProfile with ID:', activeProfile.id, 'Data:', {
+      cameraSettings: settings,
+      deviceInfo,
+    });
+
+    updateProfile(activeProfile.id, {
+      cameraSettings: settings,
+      deviceInfo,
+    });
+
+    // eslint-disable-next-line no-console
+    console.log('[page.tsx] updateProfile called successfully');
   }, [activeProfile, updateProfile]);
 
   /**

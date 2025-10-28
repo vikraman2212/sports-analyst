@@ -12,10 +12,31 @@ describe('Camera Settings Workflow Integration', () => {
 
   beforeEach(() => {
     // Create mock MediaStreamTrack with capabilities and settings
+    const mockSettings = {
+      width: 1280,
+      height: 720,
+      frameRate: 30,
+      facingMode: 'environment' as const,
+      exposureMode: 'continuous' as const,
+      exposureTime: 1000,
+      iso: 400,
+      focusMode: 'continuous' as const,
+      whiteBalanceMode: 'continuous' as const,
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      sharpness: 0,
+      zoom: 1,
+    };
+
     mockTrack = {
       kind: 'video',
       enabled: true,
       getCapabilities: jest.fn(() => ({
+        width: { min: 640, max: 3840 },
+        height: { min: 480, max: 2160 },
+        frameRate: { min: 15, max: 240 },
+        facingMode: ['user', 'environment'],
         exposureMode: ['manual', 'continuous'],
         exposureTime: { min: 100, max: 10000, step: 100 },
         iso: { min: 100, max: 3200, step: 100 },
@@ -28,19 +49,42 @@ describe('Camera Settings Workflow Integration', () => {
         sharpness: { min: -100, max: 100, step: 1 },
         zoom: { min: 1, max: 10, step: 0.1 },
       })),
-      getSettings: jest.fn(() => ({
-        exposureMode: 'continuous',
-        exposureTime: 1000,
-        iso: 400,
-        focusMode: 'continuous',
-        whiteBalanceMode: 'continuous',
-        brightness: 0,
-        contrast: 0,
-        saturation: 0,
-        sharpness: 0,
-        zoom: 1,
-      })),
-      applyConstraints: jest.fn().mockResolvedValue(undefined),
+      getSettings: jest.fn(() => mockSettings),
+      applyConstraints: jest.fn(async (constraints: MediaTrackConstraints) => {
+        const advanced = (constraints as { advanced?: Array<Record<string, unknown>> }).advanced;
+        const firstAdvanced = advanced?.[0] as Record<string, { exact?: number; ideal?: number; min?: number }> | undefined;
+        
+        // Handle width with exact or ideal
+        if (firstAdvanced?.width?.exact) {
+          mockSettings.width = firstAdvanced.width.exact;
+        } else if (firstAdvanced?.width?.ideal) {
+          mockSettings.width = firstAdvanced.width.ideal;
+        }
+        
+        // Handle height with exact or ideal
+        if (firstAdvanced?.height?.exact) {
+          mockSettings.height = firstAdvanced.height.exact;
+        } else if (firstAdvanced?.height?.ideal) {
+          mockSettings.height = firstAdvanced.height.ideal;
+        }
+        
+        // Handle frameRate with exact, ideal, or min
+        if (firstAdvanced?.frameRate?.exact) {
+          const requestedFPS = firstAdvanced.frameRate.exact;
+          const capabilities = mockTrack.getCapabilities() as { frameRate: { min: number; max: number } };
+          if (requestedFPS >= capabilities.frameRate.min && requestedFPS <= capabilities.frameRate.max) {
+            mockSettings.frameRate = requestedFPS;
+          }
+        } else if (firstAdvanced?.frameRate?.ideal) {
+          mockSettings.frameRate = firstAdvanced.frameRate.ideal;
+        } else if (firstAdvanced?.frameRate?.min) {
+          const requestedFPS = firstAdvanced.frameRate.min;
+          const capabilities = mockTrack.getCapabilities() as { frameRate: { min: number; max: number } };
+          if (requestedFPS >= capabilities.frameRate.min && requestedFPS <= capabilities.frameRate.max) {
+            mockSettings.frameRate = requestedFPS;
+          }
+        }
+      }),
       stop: jest.fn(),
     } as unknown as MediaStreamTrack;
 
@@ -68,6 +112,8 @@ describe('Camera Settings Workflow Integration', () => {
     const { result } = renderHook(() => useCameraSettings(mockStream));
 
     expect(result.current.currentSettings).toBeTruthy();
+    expect(result.current.currentSettings?.width).toBe(1280);
+    expect(result.current.currentSettings?.height).toBe(720);
     expect(result.current.currentSettings?.exposureMode).toBe('continuous');
     expect(result.current.currentSettings?.iso).toBe(400);
   });
@@ -216,20 +262,26 @@ describe('Camera Settings Workflow Integration', () => {
       frameRate: 60,
     };
 
-    let success = false;
     await act(async () => {
-      success = await result.current.applyBasicSettings(basicSettings);
+      const appliedSettings = await result.current.applyBasicSettings(basicSettings);
+      expect(appliedSettings).toBeTruthy();
+      if (!appliedSettings) {
+        throw new Error('Expected applyBasicSettings to return current constraints');
+      }
+      expect(appliedSettings.width).toBe(1920);
+      expect(appliedSettings.height).toBe(1080);
+      expect(appliedSettings.frameRate).toBe(60);
     });
-
-    expect(success).toBe(true);
     expect(mockTrack.applyConstraints).toHaveBeenCalled();
 
     // Verify basic constraints were applied
     const constraintsCall = (mockTrack.applyConstraints as jest.Mock).mock.calls[0][0];
     expect(constraintsCall.advanced).toBeDefined();
-    expect(constraintsCall.advanced[0].width).toEqual({ ideal: 1920 });
-    expect(constraintsCall.advanced[0].height).toEqual({ ideal: 1080 });
-    expect(constraintsCall.advanced[0].frameRate).toEqual({ ideal: 60 });
+    // Progressive fallback: tries exact first, falls back to ideal if needed
+    expect(constraintsCall.advanced[0].width).toEqual({ exact: 1920 });
+    expect(constraintsCall.advanced[0].height).toEqual({ exact: 1080 });
+    // frameRate uses exact first, falls back to ideal
+    expect(constraintsCall.advanced[0].frameRate).toEqual({ exact: 60 });
   });
 
   it('should detect when advanced controls are available', () => {

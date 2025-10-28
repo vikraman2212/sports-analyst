@@ -178,12 +178,13 @@ describe('useCameraFeed Hook', () => {
         await result.current.startCamera();
       });
 
+      // Progressive fallback strategy: first tries exact, falls back to ideal
       expect(mockGetUserMedia).toHaveBeenCalledWith({
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 60 },
-          facingMode: 'user',
+          width: { exact: 1280 },
+          height: { exact: 720 },
+          frameRate: { exact: 60 },
+          facingMode: { ideal: 'user' },
         },
         audio: false,
       });

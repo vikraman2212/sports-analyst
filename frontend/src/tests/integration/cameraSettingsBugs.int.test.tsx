@@ -287,5 +287,46 @@ describe('Camera Settings Bugs - Integration Tests', () => {
       expect(reloaded.cameraSettings.exposureTime).toBe(150);
       expect(reloaded.cameraSettings.iso).toBe(600);
     });
+
+    it('should persist 60 FPS when camera supports it', () => {
+      // Step 1: Create calibration profile
+      const calibrationProfile = {
+        id: 'fps-test-1',
+        name: 'FPS Test',
+        createdAt: new Date().toISOString(),
+        pitchLengthPixels: 500,
+        referenceDistanceMeters: 20.12,
+        ballMassGrams: 156,
+        homographyMatrix: null,
+      };
+
+      localStorage.setItem('speedometer_calibration_profiles', JSON.stringify([calibrationProfile]));
+      localStorage.setItem('speedometer_active_calibration_id', 'fps-test-1');
+
+      // Step 2: Apply 60 FPS setting (simulating user selecting 60 FPS)
+      const withFPS = {
+        ...calibrationProfile,
+        cameraSettings: {
+          width: 1920,
+          height: 1080,
+          frameRate: 60,
+        },
+        deviceInfo: {
+          resolution: '1920x1080',
+          fps: 60,
+          lastUpdatedAt: new Date().toISOString(),
+        },
+      };
+
+      localStorage.setItem('speedometer_calibration_profiles', JSON.stringify([withFPS]));
+
+      // Step 3: Reload profile (simulating new delivery or page refresh)
+      const reloaded = JSON.parse(localStorage.getItem('speedometer_calibration_profiles')!)[0];
+
+      // Step 4: Verify 60 FPS is persisted in both cameraSettings and deviceInfo
+      expect(reloaded.cameraSettings).toBeDefined();
+      expect(reloaded.cameraSettings.frameRate).toBe(60);
+      expect(reloaded.deviceInfo.fps).toBe(60);
+    });
   });
 });

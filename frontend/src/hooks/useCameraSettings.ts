@@ -23,10 +23,12 @@ export interface UseCameraSettingsReturn {
   currentSettings: CameraConstraints | null;
   applySettings: (settings: CameraConstraints) => Promise<boolean>;
   applyPreset: (preset: 'auto' | 'fast-motion') => Promise<boolean>;
-  applyBasicSettings: (settings: BasicCameraSettings) => Promise<boolean>;
+  applyBasicSettings: (settings: BasicCameraSettings) => Promise<CameraConstraints | null>;
   isSupported: boolean;
   hasAdvancedControls: boolean;
   error: string | null;
+  lastApplyMessage: string | null;
+  clearLastApplyMessage: () => void;
 }
 
 /**
@@ -37,6 +39,10 @@ function detectCapabilities(track: MediaStreamTrack): CameraCapabilities {
   const capabilities = track.getCapabilities() as any;
 
   return {
+    width: capabilities.width,
+    height: capabilities.height,
+    frameRate: capabilities.frameRate,
+    facingMode: capabilities.facingMode,
     exposureMode: capabilities.exposureMode,
     exposureTime: capabilities.exposureTime,
     iso: capabilities.iso,
@@ -59,6 +65,10 @@ function getCurrentSettings(track: MediaStreamTrack): CameraConstraints {
   const settings = track.getSettings() as any;
 
   return {
+    width: settings.width,
+    height: settings.height,
+    frameRate: settings.frameRate,
+    facingMode: settings.facingMode,
     exposureMode: settings.exposureMode,
     exposureTime: settings.exposureTime,
     iso: settings.iso,
@@ -82,6 +92,8 @@ export function useCameraSettings(
   const [capabilities, setCapabilities] = useState<CameraCapabilities | null>(null);
   const [currentSettings, setCurrentSettings] = useState<CameraConstraints | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastApplyMessage, setLastApplyMessage] = useState<string | null>(null);
+  const clearLastApplyMessage = useCallback(() => setLastApplyMessage(null), []);
   const trackRef = useRef<MediaStreamTrack | null>(null);
 
   // Detect capabilities when stream changes
@@ -90,6 +102,7 @@ export function useCameraSettings(
       setCapabilities(null);
       setCurrentSettings(null);
       trackRef.current = null;
+      setLastApplyMessage(null);
       return;
     }
 
@@ -107,6 +120,7 @@ export function useCameraSettings(
       setCapabilities(caps);
       setCurrentSettings(settings);
       setError(null);
+      setLastApplyMessage(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to detect camera capabilities');
     }
@@ -167,11 +181,13 @@ export function useCameraSettings(
       const newSettings = getCurrentSettings(track);
       setCurrentSettings(newSettings);
       setError(null);
+      setLastApplyMessage(null);
 
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to apply camera settings';
       setError(message);
+      setLastApplyMessage(message);
       return false;
     }
   }, [capabilities]);
@@ -228,43 +244,99 @@ export function useCameraSettings(
    * Apply basic camera settings (mobile-compatible)
    * These work on both desktop and mobile browsers
    */
-  const applyBasicSettings = useCallback(async (settings: BasicCameraSettings): Promise<boolean> => {
+  const applyBasicSettings = useCallback(async (settings: BasicCameraSettings): Promise<CameraConstraints | null> => {
     const track = trackRef.current;
     if (!track) {
       setError('No video track available');
-      return false;
+      setLastApplyMessage('No camera stream detected. Please refresh and allow camera access.');
+      return null;
     }
 
     try {
       // Build constraints for basic settings
+      // Try exact constraints first for best results
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const constraints: any = { advanced: [{}] };
 
       if (settings.width) {
-        constraints.advanced[0].width = { ideal: settings.width };
+        constraints.advanced[0].width = { exact: settings.width };
       }
       if (settings.height) {
-        constraints.advanced[0].height = { ideal: settings.height };
+        constraints.advanced[0].height = { exact: settings.height };
       }
       if (settings.frameRate) {
-        constraints.advanced[0].frameRate = { ideal: settings.frameRate };
+        constraints.advanced[0].frameRate = { exact: settings.frameRate };
       }
       if (settings.facingMode) {
         constraints.advanced[0].facingMode = { ideal: settings.facingMode };
       }
 
-      await track.applyConstraints(constraints);
+      try {
+        await track.applyConstraints(constraints);
+      } catch {
+        // If exact constraints fail, fall back to ideal for more flexibility
+        console.warn('Exact constraints failed, trying ideal constraints');
+        
+        if (settings.width) {
+          constraints.advanced[0].width = { ideal: settings.width };
+        }
+        if (settings.height) {
+          constraints.advanced[0].height = { ideal: settings.height };
+        }
+        if (settings.frameRate) {
+          constraints.advanced[0].frameRate = { ideal: settings.frameRate };
+        }
+        
+        await track.applyConstraints(constraints);
+      }
 
       // Update current settings after successful apply
       const newSettings = getCurrentSettings(track);
       setCurrentSettings(newSettings);
       setError(null);
-      
-      return true;
+
+      // Compare requested vs actual to surface helpful feedback
+      const messages: string[] = [];
+
+      const requestedWidth = settings.width;
+      const requestedHeight = settings.height;
+      const requestedFPS = settings.frameRate;
+
+      if (requestedWidth && requestedHeight) {
+        if (newSettings.width !== requestedWidth || newSettings.height !== requestedHeight) {
+          messages.push(
+            `Browser limited resolution to ${newSettings.width ?? 'unknown'}×${newSettings.height ?? 'unknown'} despite requesting ${requestedWidth}×${requestedHeight}.`
+          );
+        }
+      }
+
+      if (requestedFPS) {
+        if (!newSettings.frameRate || Math.abs(newSettings.frameRate - requestedFPS) > 1) {
+          messages.push(
+            `Browser provided ${newSettings.frameRate ?? 'unknown'} FPS after requesting ${requestedFPS} FPS.`
+          );
+        }
+      }
+
+      if (messages.length === 0) {
+        const summaryWidth = newSettings.width ?? requestedWidth;
+        const summaryHeight = newSettings.height ?? requestedHeight;
+        const summaryFPS = newSettings.frameRate ?? requestedFPS;
+        if (summaryWidth && summaryHeight && summaryFPS) {
+          setLastApplyMessage(`Applied ${summaryWidth}×${summaryHeight} @ ${summaryFPS} FPS successfully.`);
+        } else {
+          setLastApplyMessage('Camera settings applied successfully.');
+        }
+      } else {
+        setLastApplyMessage(messages.join(' '));
+      }
+
+      return newSettings;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to apply camera settings';
       setError(message);
-      return false;
+      setLastApplyMessage(message);
+      return null;
     }
   }, []);
 
@@ -284,5 +356,7 @@ export function useCameraSettings(
     isSupported,
     hasAdvancedControls,
     error,
+    lastApplyMessage,
+    clearLastApplyMessage,
   };
 }

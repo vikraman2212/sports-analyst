@@ -107,11 +107,13 @@ export interface CameraFeedActions {
 
 /**
  * Default camera constraints
+ * These are starting preferences - the hook will gracefully fall back
+ * to lower settings if the device doesn't support them
  */
 const DEFAULT_CONSTRAINTS: CameraConstraints = {
   width: 1920,
   height: 1080,
-  frameRate: 30,
+  frameRate: 60, // Prefer 60 FPS, but will fall back to 30 or device default
   facingMode: 'environment', // Rear camera for mobile
 };
 
@@ -179,18 +181,53 @@ export function useCameraFeed(
 
       // Build media constraints using ref to avoid dependency issues
       const currentConstraints = constraintsRef.current;
-      const mediaConstraints: MediaStreamConstraints = {
+      const targetFPS = currentConstraints.frameRate || DEFAULT_CONSTRAINTS.frameRate;
+      const facingMode = currentConstraints.facingMode || DEFAULT_CONSTRAINTS.facingMode;
+      
+      // Progressive fallback strategy for maximum compatibility:
+      // 1. Try exact constraints (works on high-end devices like Pixel 9 Pro)
+      // 2. Try ideal constraints (browser picks closest match)
+      // 3. Try no FPS constraint (device default)
+      let mediaConstraints: MediaStreamConstraints = {
         video: {
-          width: { ideal: currentConstraints.width || DEFAULT_CONSTRAINTS.width },
-          height: { ideal: currentConstraints.height || DEFAULT_CONSTRAINTS.height },
-          frameRate: { ideal: currentConstraints.frameRate || DEFAULT_CONSTRAINTS.frameRate },
-          facingMode: currentConstraints.facingMode || DEFAULT_CONSTRAINTS.facingMode,
+          width: { exact: currentConstraints.width || DEFAULT_CONSTRAINTS.width },
+          height: { exact: currentConstraints.height || DEFAULT_CONSTRAINTS.height },
+          frameRate: { exact: targetFPS },
+          facingMode: { ideal: facingMode }, // Use ideal for facingMode to prefer rear camera
         },
         audio: false,
       };
 
-      // Request camera access
-      const mediaStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      // Request camera access with progressive fallback
+      let mediaStream: MediaStream;
+      try {
+        // Try exact constraints first
+        mediaStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      } catch {
+        try {
+          // Exact failed, try ideal constraints for all parameters
+          mediaConstraints = {
+            video: {
+              width: { ideal: currentConstraints.width || DEFAULT_CONSTRAINTS.width },
+              height: { ideal: currentConstraints.height || DEFAULT_CONSTRAINTS.height },
+              frameRate: { ideal: targetFPS },
+              facingMode: { ideal: facingMode },
+            },
+            audio: false,
+          };
+          mediaStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        } catch {
+          // Ideal failed, try minimal constraints (just camera selection)
+          mediaConstraints = {
+            video: {
+              facingMode: { ideal: facingMode },
+            },
+            audio: false,
+          };
+          mediaStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        }
+      }
+      
       setIsActive(true);
       setIsLoading(false);
       setStream(mediaStream);
@@ -227,6 +264,18 @@ export function useCameraFeed(
                 const settings = videoTrack.getSettings();
                 if (settings.frameRate) {
                   setActualFrameRate(settings.frameRate);
+                  // Log for debugging
+                  const cameraLabel = videoTrack.label || 'Unknown';
+                  const facing = settings.facingMode || 'unknown';
+                  const requestedFPS = targetFPS || 60;
+                  const gotTargetFPS = settings.frameRate >= requestedFPS;
+                  
+                  console.warn(`Camera initialized: ${settings.width}x${settings.height} @ ${settings.frameRate} FPS`);
+                  console.warn(`Camera: ${cameraLabel} (facing: ${facing}, requested: ${facingMode})`);
+                  
+                  if (!gotTargetFPS && requestedFPS > 30) {
+                    console.warn(`⚠️ Requested ${requestedFPS} FPS but got ${settings.frameRate} FPS - device limitation`);
+                  }
                 }
               }
               resolve();

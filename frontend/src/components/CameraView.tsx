@@ -25,7 +25,7 @@ import { useCameraDiagnostics } from '../hooks/useCameraDiagnostics';
 import { CameraGuidance } from './CameraGuidance';
 import { CameraCalibrator } from './CameraCalibrator';
 import { CameraSettings } from './CameraSettings';
-import type { CalibrationProfile, DeliveryResult } from '../lib/types';
+import type { CalibrationProfile, CameraConstraints, DeliveryResult } from '../lib/types';
 
 export interface CameraViewProps {
   /**
@@ -98,7 +98,7 @@ export interface CameraViewProps {
    * Callback when camera settings are changed
    * Used to save settings to calibration profile
    */
-  onCameraSettingsChanged?: (settings: import('../lib/types').CameraConstraints) => void;
+  onCameraSettingsChanged?: (settings: CameraConstraints) => void;
 
   /**
    * Optional CSS class name
@@ -136,7 +136,9 @@ export function CameraView({
   className = '',
   resetTrigger = 0,
 }: CameraViewProps) {
-  // Camera feed hook
+  // Camera feed hook - Use saved settings from calibration profile, or defaults
+  // Defaults prefer high quality: 60 FPS, 1080p, rear camera
+  // But will gracefully fall back if device doesn't support it
   const {
     isActive: isCameraActive,
     isLoading: isCameraLoading,
@@ -147,8 +149,10 @@ export function CameraView({
     stopCamera,
     captureFrame,
   } = useCameraFeed({
-    facingMode: 'environment', // Rear camera on mobile
-    frameRate: 30,
+    width: calibration?.cameraSettings?.width || 1920,
+    height: calibration?.cameraSettings?.height || 1080,
+    frameRate: calibration?.cameraSettings?.frameRate || 60, // Prefer 60 FPS, fallback if unsupported
+    facingMode: calibration?.cameraSettings?.facingMode || 'environment',
   });
 
   // Camera diagnostics hook
@@ -419,12 +423,15 @@ export function CameraView({
 
         {/* Camera Settings Overlay */}
         {isSettingsOpen && (
-          <div className="absolute inset-0 z-50">
-            <CameraSettings
-              stream={stream}
-              onClose={onCloseSettings || (() => {})}
-              onSettingsChanged={onCameraSettingsChanged}
-            />
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md">
+              <CameraSettings
+                stream={stream}
+                initialSettings={calibration?.cameraSettings ?? null}
+                onClose={onCloseSettings || (() => {})}
+                onSettingsChanged={onCameraSettingsChanged}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -512,13 +519,18 @@ export function CameraView({
           right: 1rem;
           max-width: 400px;
           z-index: 10;
+          pointer-events: auto;
         }
 
         @media (max-width: 640px) {
           .camera-view__guidance-overlay {
-            top: 0.5rem;
+            position: fixed;
+            top: env(safe-area-inset-top, 0.5rem);
             left: 0.5rem;
             right: 0.5rem;
+            bottom: auto;
+            z-index: 40;
+            max-width: none;
           }
         }
 
