@@ -190,10 +190,10 @@ export default function Home() {
 
   /**
    * Handle camera settings changed
-   * Saves settings to active calibration profile
+   * Saves settings to active calibration profile (including default)
    */
   const handleCameraSettingsChanged = useCallback((settings: import('@/lib/types').CameraConstraints) => {
-    if (activeProfile && activeProfile.id !== 'default') {
+    if (activeProfile) {
       updateProfile(activeProfile.id, {
         cameraSettings: settings,
       });

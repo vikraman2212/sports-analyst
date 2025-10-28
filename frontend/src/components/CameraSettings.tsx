@@ -100,8 +100,8 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
   }
 
   return (
-    <div className="p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 max-w-md">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 max-w-md max-h-[80vh] overflow-y-auto">
+      <div className="flex items-center justify-between mb-4 sticky top-0 bg-white/10 backdrop-blur-sm pb-2 -mx-6 px-6 z-10">
         <h3 className="text-lg font-semibold text-white">Camera Settings</h3>
         <button
           onClick={onClose}
@@ -215,6 +215,19 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
         {applying && (
           <p className="text-sm text-cyan-400 text-center">Applying settings...</p>
         )}
+
+        {/* Save & Close Button */}
+        <div className="pt-4 border-t border-white/20">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-medium transition-colors"
+          >
+            ✓ Save & Close
+          </button>
+          <p className="text-xs text-white/60 text-center mt-2">
+            Settings are saved automatically
+          </p>
+        </div>
       </div>
     </div>
   );
