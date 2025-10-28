@@ -47,7 +47,7 @@ export default function Home() {
   
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
-  const { activeProfile, createProfile } = useCalibrationProfiles();
+  const { activeProfile, createProfile, updateProfile } = useCalibrationProfiles();
 
   // Create calibration based on active profile and current pitch/weight settings
   const calibration = useMemo(() => {
@@ -189,6 +189,18 @@ export default function Home() {
   }, []);
 
   /**
+   * Handle camera settings changed
+   * Saves settings to active calibration profile
+   */
+  const handleCameraSettingsChanged = useCallback((settings: import('@/lib/types').CameraConstraints) => {
+    if (activeProfile && activeProfile.id !== 'default') {
+      updateProfile(activeProfile.id, {
+        cameraSettings: settings,
+      });
+    }
+  }, [activeProfile, updateProfile]);
+
+  /**
    * Toggle replay view
    */
   const handleToggleReplay = useCallback(() => {
@@ -286,6 +298,7 @@ export default function Home() {
                 onRequestSettings={handleOpenSettings}
                 isSettingsOpen={isSettingsOpen}
                 onCloseSettings={handleCloseSettings}
+                onCameraSettingsChanged={handleCameraSettingsChanged}
               />
             </div>
 

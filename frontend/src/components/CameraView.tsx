@@ -95,6 +95,12 @@ export interface CameraViewProps {
   onCloseSettings?: () => void;
 
   /**
+   * Callback when camera settings are changed
+   * Used to save settings to calibration profile
+   */
+  onCameraSettingsChanged?: (settings: import('../lib/types').CameraConstraints) => void;
+
+  /**
    * Optional CSS class name
    */
   className?: string;
@@ -126,6 +132,7 @@ export function CameraView({
   onRequestSettings,
   isSettingsOpen = false,
   onCloseSettings,
+  onCameraSettingsChanged,
   className = '',
   resetTrigger = 0,
 }: CameraViewProps) {
@@ -416,6 +423,7 @@ export function CameraView({
             <CameraSettings
               stream={stream}
               onClose={onCloseSettings || (() => {})}
+              onSettingsChanged={onCameraSettingsChanged}
             />
           </div>
         )}

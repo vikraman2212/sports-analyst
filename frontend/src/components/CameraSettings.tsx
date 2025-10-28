@@ -8,13 +8,15 @@
 
 import { useState } from 'react';
 import { useCameraSettings } from '@/hooks/useCameraSettings';
+import type { CameraConstraints } from '@/lib/types';
 
 export interface CameraSettingsProps {
   stream: MediaStream | null;
   onClose: () => void;
+  onSettingsChanged?: (settings: CameraConstraints) => void;
 }
 
-export function CameraSettings({ stream, onClose }: CameraSettingsProps) {
+export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSettingsProps) {
   const {
     capabilities,
     currentSettings,
@@ -33,7 +35,9 @@ export function CameraSettings({ stream, onClose }: CameraSettingsProps) {
     const success = await applyPreset(preset);
     setApplying(false);
 
-    if (success) {
+    if (success && currentSettings) {
+      // Notify parent about settings change
+      onSettingsChanged?.(currentSettings);
       // Show feedback
       setTimeout(onClose, 1000);
     }
@@ -50,14 +54,24 @@ export function CameraSettings({ stream, onClose }: CameraSettingsProps) {
     };
 
     const { width, height } = resolutionMap[resolution] || resolutionMap['720p'];
-    await applyBasicSettings({ width, height });
+    const success = await applyBasicSettings({ width, height });
+    
+    if (success && currentSettings) {
+      onSettingsChanged?.(currentSettings);
+    }
+    
     setApplying(false);
   };
 
   const handleFPSChange = async (fps: number) => {
     setSelectedFPS(fps);
     setApplying(true);
-    await applyBasicSettings({ frameRate: fps });
+    const success = await applyBasicSettings({ frameRate: fps });
+    
+    if (success && currentSettings) {
+      onSettingsChanged?.(currentSettings);
+    }
+    
     setApplying(false);
   };
 

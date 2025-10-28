@@ -173,28 +173,26 @@ export function CameraGuidance({
       )}
 
       {/* Action Buttons */}
-      {(onOpenCalibration || onOpenSettings) && !diagnostics.meetsRequirements && (
-        <div className="camera-guidance__actions">
-          {onOpenCalibration && (
-            <button
-              onClick={onOpenCalibration}
-              className="camera-guidance__action-btn camera-guidance__action-btn--calibrate"
-              aria-label="Open camera calibration wizard"
-            >
-              📐 Calibrate Camera
-            </button>
-          )}
-          {onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="camera-guidance__action-btn camera-guidance__action-btn--settings"
-              aria-label="Adjust camera settings"
-            >
-              ⚙️ Adjust Settings
-            </button>
-          )}
-        </div>
-      )}
+      <div className="camera-guidance__actions">
+        {onOpenCalibration && (
+          <button
+            onClick={onOpenCalibration}
+            className="camera-guidance__action-btn camera-guidance__action-btn--calibrate"
+            aria-label="Open camera calibration wizard"
+          >
+            📐 Calibrate Camera
+          </button>
+        )}
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="camera-guidance__action-btn camera-guidance__action-btn--settings"
+            aria-label="Adjust camera settings"
+          >
+            ⚙️ Adjust Settings
+          </button>
+        )}
+      </div>
 
       <style jsx>{`
         .camera-guidance {
