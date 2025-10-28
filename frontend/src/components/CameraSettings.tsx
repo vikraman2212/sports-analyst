@@ -29,6 +29,7 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
   const [applying, setApplying] = useState(false);
   const [selectedResolution, setSelectedResolution] = useState<string>('720p');
   const [selectedFPS, setSelectedFPS] = useState<number>(30);
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   const handlePreset = async (preset: 'auto' | 'fast-motion') => {
     setApplying(true);
@@ -38,13 +39,21 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
     if (success && currentSettings) {
       // Notify parent about settings change
       onSettingsChanged?.(currentSettings);
-      // Show feedback
-      setTimeout(onClose, 1000);
+      setHasPendingChanges(false);
     }
   };
 
-  const handleResolutionChange = async (resolution: string) => {
+  const handleResolutionChange = (resolution: string) => {
     setSelectedResolution(resolution);
+    setHasPendingChanges(true);
+  };
+
+  const handleFPSChange = (fps: number) => {
+    setSelectedFPS(fps);
+    setHasPendingChanges(true);
+  };
+
+  const handleApplyBasicSettings = async () => {
     setApplying(true);
 
     const resolutionMap: Record<string, { width: number; height: number }> = {
@@ -53,23 +62,18 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
       '1080p': { width: 1920, height: 1080 },
     };
 
-    const { width, height } = resolutionMap[resolution] || resolutionMap['720p'];
-    const success = await applyBasicSettings({ width, height });
+    const { width, height } = resolutionMap[selectedResolution] || resolutionMap['720p'];
+    
+    // Apply both resolution and FPS together
+    const success = await applyBasicSettings({ 
+      width, 
+      height, 
+      frameRate: selectedFPS 
+    });
     
     if (success && currentSettings) {
       onSettingsChanged?.(currentSettings);
-    }
-    
-    setApplying(false);
-  };
-
-  const handleFPSChange = async (fps: number) => {
-    setSelectedFPS(fps);
-    setApplying(true);
-    const success = await applyBasicSettings({ frameRate: fps });
-    
-    if (success && currentSettings) {
-      onSettingsChanged?.(currentSettings);
+      setHasPendingChanges(false);
     }
     
     setApplying(false);
@@ -160,6 +164,17 @@ export function CameraSettings({ stream, onClose, onSettingsChanged }: CameraSet
               <option value={60}>60 FPS</option>
             </select>
           </div>
+
+          {/* Apply Settings Button - Shows when changes pending */}
+          {hasPendingChanges && (
+            <button
+              onClick={handleApplyBasicSettings}
+              disabled={applying}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+            >
+              {applying ? 'Applying...' : '✓ Apply Settings'}
+            </button>
+          )}
         </div>
 
         {/* Advanced controls (desktop only) */}
