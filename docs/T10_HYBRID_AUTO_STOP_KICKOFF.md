@@ -13,6 +13,7 @@
 Fully automate the STOP button by detecting when the ball disappears from the frame for 30 consecutive frames. Users manually press START, then recording stops automatically when the ball exits.
 
 **User Workflow:**
+
 1. User clicks "Start Recording" ✅ (manual)
 2. Ball tracking begins automatically
 3. Ball exits frame → countdown begins (30 frames)
@@ -64,7 +65,7 @@ interface AutoStopState {
 
 export function useAutoStop(config: AutoStopConfig) {
   const [state, setState] = useState<AutoStopState>({...});
-  
+
   const onFrame = useCallback((hasDetection: boolean) => {
     // Increment frame count
     // If hasDetection, reset consecutiveEmptyFrames
@@ -72,11 +73,11 @@ export function useAutoStop(config: AutoStopConfig) {
     // Check if threshold reached → set shouldStop
     // Calculate countdown progress
   }, [config]);
-  
+
   const reset = useCallback(() => {
     // Reset all counters
   }, []);
-  
+
   return { state, onFrame, reset };
 }
 ```
@@ -88,6 +89,7 @@ export function useAutoStop(config: AutoStopConfig) {
 **File:** `frontend/src/components/CameraView.tsx`
 
 **Changes:**
+
 - Add `useAutoStop` hook instance
 - Pass detection result to `onFrame()` on each frame
 - Watch `shouldStop` flag via `useEffect`
@@ -99,10 +101,14 @@ const autoStopConfig = {
   enabled: true,
   threshold: 30, // from settings or default
   minFrames: 10,
-  safetyTimeout: 10000 // 10s
+  safetyTimeout: 10000, // 10s
 };
 
-const { state: autoStopState, onFrame, reset: resetAutoStop } = useAutoStop(autoStopConfig);
+const {
+  state: autoStopState,
+  onFrame,
+  reset: resetAutoStop,
+} = useAutoStop(autoStopConfig);
 
 // In recording loop
 useEffect(() => {
@@ -115,7 +121,7 @@ useEffect(() => {
 // Watch for auto-stop trigger
 useEffect(() => {
   if (autoStopState.shouldStop && isRecording) {
-    handleStopRecording('auto');
+    handleStopRecording("auto");
   }
 }, [autoStopState.shouldStop, isRecording]);
 ```
@@ -133,30 +139,28 @@ interface RecordingIndicatorProps {
   onManualStop: () => void;
 }
 
-export function RecordingIndicator({ 
-  isRecording, 
-  autoStopState, 
-  onManualStop 
+export function RecordingIndicator({
+  isRecording,
+  autoStopState,
+  onManualStop,
 }: RecordingIndicatorProps) {
   if (!isRecording) return null;
-  
+
   const { consecutiveEmptyFrames, countdownProgress } = autoStopState;
   const isCountingDown = consecutiveEmptyFrames > 0;
-  
+
   return (
     <div className="recording-indicator">
       <div className="rec-badge">● REC</div>
-      
+
       {isCountingDown && (
         <div className="countdown">
           <CircularProgress value={countdownProgress} />
           <span>Auto-stopping in {threshold - consecutiveEmptyFrames}...</span>
         </div>
       )}
-      
-      <button onClick={onManualStop}>
-        Stop Recording
-      </button>
+
+      <button onClick={onManualStop}>Stop Recording</button>
     </div>
   );
 }
@@ -171,23 +175,23 @@ export function RecordingIndicator({
 ```typescript
 export function AutoStopSettings() {
   const [threshold, setThreshold] = useState<number>(30);
-  
+
   const presets = [
-    { name: 'Quick', value: 15, desc: 'For short pitches' },
-    { name: 'Normal', value: 30, desc: 'Recommended' },
-    { name: 'Patient', value: 60, desc: 'For slow motion cameras' }
+    { name: "Quick", value: 15, desc: "For short pitches" },
+    { name: "Normal", value: 30, desc: "Recommended" },
+    { name: "Patient", value: 60, desc: "For slow motion cameras" },
   ];
-  
+
   return (
     <div className="auto-stop-settings">
       <h3>Auto-Stop Settings</h3>
-      
+
       <div className="presets">
-        {presets.map(preset => (
-          <button 
+        {presets.map((preset) => (
+          <button
             key={preset.value}
             onClick={() => setThreshold(preset.value)}
-            className={threshold === preset.value ? 'active' : ''}
+            className={threshold === preset.value ? "active" : ""}
           >
             <strong>{preset.name}</strong>
             <span>{preset.desc}</span>
@@ -195,18 +199,20 @@ export function AutoStopSettings() {
           </button>
         ))}
       </div>
-      
+
       <div className="custom">
         <label>Custom threshold (frames):</label>
-        <input 
-          type="range" 
-          min="10" 
-          max="90" 
+        <input
+          type="range"
+          min="10"
+          max="90"
           step="5"
           value={threshold}
           onChange={(e) => setThreshold(Number(e.target.value))}
         />
-        <span>{threshold} frames (~{(threshold / 30).toFixed(1)}s at 30 FPS)</span>
+        <span>
+          {threshold} frames (~{(threshold / 30).toFixed(1)}s at 30 FPS)
+        </span>
       </div>
     </div>
   );
@@ -301,7 +307,7 @@ describe('useAutoStop', () => {
     onFrame(false);
     expect(state.consecutiveEmptyFrames).toBe(2);
   });
-  
+
   it('resets counter when ball detected', () => {
     const { onFrame, state } = renderHook(() => useAutoStop({...}));
     onFrame(false);
@@ -310,7 +316,7 @@ describe('useAutoStop', () => {
     onFrame(true); // ball detected
     expect(state.consecutiveEmptyFrames).toBe(0);
   });
-  
+
   it('triggers auto-stop at threshold', () => {
     const { onFrame, state } = renderHook(() => useAutoStop({ threshold: 3 }));
     onFrame(false);
@@ -319,11 +325,11 @@ describe('useAutoStop', () => {
     onFrame(false); // 3rd empty frame
     expect(state.shouldStop).toBe(true);
   });
-  
+
   it('respects minimum frames before auto-stop', () => {
-    const { onFrame, state } = renderHook(() => useAutoStop({ 
-      threshold: 3, 
-      minFrames: 10 
+    const { onFrame, state } = renderHook(() => useAutoStop({
+      threshold: 3,
+      minFrames: 10
     }));
     // Send 5 frames with detection
     for (let i = 0; i < 5; i++) onFrame(true);
@@ -333,20 +339,20 @@ describe('useAutoStop', () => {
     onFrame(false);
     expect(state.shouldStop).toBe(false); // total < 10
   });
-  
+
   it('triggers safety timeout', async () => {
-    const { onFrame, state } = renderHook(() => useAutoStop({ 
-      safetyTimeout: 100 
+    const { onFrame, state } = renderHook(() => useAutoStop({
+      safetyTimeout: 100
     }));
-    
+
     // Keep detecting ball
     const interval = setInterval(() => onFrame(true), 10);
-    
+
     await waitFor(() => {
       expect(state.shouldStop).toBe(true);
       expect(state.reason).toBe('timeout');
     }, { timeout: 150 });
-    
+
     clearInterval(interval);
   });
 });
@@ -357,31 +363,31 @@ describe('useAutoStop', () => {
 **File:** `frontend/src/tests/integration/autoStopFlow.int.test.tsx`
 
 ```typescript
-describe('Auto-Stop Workflow', () => {
-  it('stops recording automatically when ball exits', async () => {
+describe("Auto-Stop Workflow", () => {
+  it("stops recording automatically when ball exits", async () => {
     const { getByText, queryByText } = render(<App />);
-    
+
     // Start recording
-    fireEvent.click(getByText('Start Recording'));
-    
+    fireEvent.click(getByText("Start Recording"));
+
     // Simulate frames with detection
     for (let i = 0; i < 15; i++) {
       await simulateFrame(true); // ball detected
     }
-    
+
     // Ball exits - simulate empty frames
     for (let i = 0; i < 30; i++) {
       await simulateFrame(false); // no detection
     }
-    
+
     // Should auto-stop
     await waitFor(() => {
-      expect(queryByText('Recording')).not.toBeInTheDocument();
+      expect(queryByText("Recording")).not.toBeInTheDocument();
       expect(getByText(/Speed:/)).toBeInTheDocument();
     });
   });
-  
-  it('resets countdown when ball reappears', async () => {
+
+  it("resets countdown when ball reappears", async () => {
     // Start recording
     // Ball detected for 20 frames
     // Ball exits for 20 frames (countdown starts)
@@ -389,8 +395,8 @@ describe('Auto-Stop Workflow', () => {
     // Ball exits again for 30 frames
     // Auto-stop triggers
   });
-  
-  it('manual stop overrides auto-stop', async () => {
+
+  it("manual stop overrides auto-stop", async () => {
     // Start recording
     // Ball exits for 10 frames
     // User clicks manual stop
@@ -406,6 +412,7 @@ describe('Auto-Stop Workflow', () => {
 ### Recording State Indicator
 
 **Desktop Layout:**
+
 ```
 ┌─────────────────────────────────────────┐
 │  ● REC  [████████░░] 23 frames left     │
@@ -415,6 +422,7 @@ describe('Auto-Stop Workflow', () => {
 ```
 
 **Mobile Layout:**
+
 ```
 ┌──────────────────┐
 │  ● REC           │
@@ -453,6 +461,7 @@ describe('Auto-Stop Workflow', () => {
 Target: <5ms per frame
 
 **Optimizations:**
+
 - Simple counter increment (O(1))
 - No array operations
 - No heavy computations
@@ -464,6 +473,7 @@ Target: <5ms per frame
 Target: <10KB additional memory
 
 **What we're tracking:**
+
 - `consecutiveEmptyFrames`: 4 bytes (number)
 - `totalFrames`: 4 bytes (number)
 - `startTime`: 8 bytes (timestamp)
@@ -480,25 +490,28 @@ Target: <10KB additional memory
 Auto-stop triggers smart trim analysis automatically:
 
 ```typescript
-const handleStopRecording = useCallback((reason: 'auto' | 'manual') => {
-  setIsRecording(false);
-  
-  // Existing analysis
-  const result = analyzeDelivery(frames, calibration);
-  
-  // Smart trim runs automatically
-  const trimResult = analyzeRecordingEfficiency(frames);
-  
-  // Store reason for analytics
-  result.metadata.stopReason = reason;
-  
-  setCurrentResult(result);
-  setReplaySession({
-    frames,
-    trimResult,
-    // ...
-  });
-}, [frames, calibration]);
+const handleStopRecording = useCallback(
+  (reason: "auto" | "manual") => {
+    setIsRecording(false);
+
+    // Existing analysis
+    const result = analyzeDelivery(frames, calibration);
+
+    // Smart trim runs automatically
+    const trimResult = analyzeRecordingEfficiency(frames);
+
+    // Store reason for analytics
+    result.metadata.stopReason = reason;
+
+    setCurrentResult(result);
+    setReplaySession({
+      frames,
+      trimResult,
+      // ...
+    });
+  },
+  [frames, calibration]
+);
 ```
 
 ### Calibration Profiles (T16)
@@ -522,7 +535,7 @@ Auto-adjust threshold based on FPS:
 ```typescript
 const recommendedThreshold = useMemo(() => {
   const fps = cameraDiagnostics.fps || 30;
-  
+
   if (fps >= 60) return 60; // 1s at 60 FPS
   if (fps >= 30) return 30; // 1s at 30 FPS
   return 15; // 0.5s fallback
@@ -560,49 +573,37 @@ frontend/src/
 ### Day 1 (8 hours)
 
 **Morning (4h):**
+
 1. ✅ Create `useAutoStop` hook with core logic
 2. ✅ Write unit tests (10-12 tests)
 3. ✅ Add types to `lib/types.ts`
 
-**Afternoon (4h):**
-4. ✅ Create `RecordingIndicator` component
-5. ✅ Create `AutoStopSettings` component
-6. ✅ Write component tests
-7. ✅ Build progress ring visualization
+**Afternoon (4h):** 4. ✅ Create `RecordingIndicator` component 5. ✅ Create `AutoStopSettings` component 6. ✅ Write component tests 7. ✅ Build progress ring visualization
 
 ### Day 2 (8 hours)
 
-**Morning (4h):**
-8. ✅ Wire `useAutoStop` into `CameraView.tsx`
-9. ✅ Add countdown UI to recording overlay
-10. ✅ Integrate with smart trim (T9)
-11. ✅ Test full workflow manually
+**Morning (4h):** 8. ✅ Wire `useAutoStop` into `CameraView.tsx` 9. ✅ Add countdown UI to recording overlay 10. ✅ Integrate with smart trim (T9) 11. ✅ Test full workflow manually
 
-**Afternoon (4h):**
-12. ✅ Write integration tests
-13. ✅ Test edge cases (timeout, flicker, manual stop)
-14. ✅ Mobile testing (iOS/Android)
-15. ✅ Update documentation
-16. ✅ Update `project-plan.json`
+**Afternoon (4h):** 12. ✅ Write integration tests 13. ✅ Test edge cases (timeout, flicker, manual stop) 14. ✅ Mobile testing (iOS/Android) 15. ✅ Update documentation 16. ✅ Update `project-plan.json`
 
 ---
 
 ## 🎯 Acceptance Criteria Verification
 
-| Criterion | Test | Status |
-|-----------|------|--------|
-| Detects 30 consecutive empty frames | Unit test | ⬜ |
-| Auto-stops at threshold | Integration test | ⬜ |
-| Manual stop overrides | Integration test | ⬜ |
-| Ball reappearing resets counter | Unit test | ⬜ |
-| Safety timeout (10s) | Unit test | ⬜ |
-| Minimum 10 frames before auto-stop | Unit test | ⬜ |
-| <5ms overhead per frame | Performance test | ⬜ |
-| Configurable thresholds work | Component test | ⬜ |
-| Countdown UI displays correctly | Component test | ⬜ |
-| Smart trim triggers after auto-stop | Integration test | ⬜ |
-| All 610 tests still pass | Full test suite | ⬜ |
-| Works on mobile (iOS/Android) | Manual test | ⬜ |
+| Criterion                           | Test             | Status |
+| ----------------------------------- | ---------------- | ------ |
+| Detects 30 consecutive empty frames | Unit test        | ⬜     |
+| Auto-stops at threshold             | Integration test | ⬜     |
+| Manual stop overrides               | Integration test | ⬜     |
+| Ball reappearing resets counter     | Unit test        | ⬜     |
+| Safety timeout (10s)                | Unit test        | ⬜     |
+| Minimum 10 frames before auto-stop  | Unit test        | ⬜     |
+| <5ms overhead per frame             | Performance test | ⬜     |
+| Configurable thresholds work        | Component test   | ⬜     |
+| Countdown UI displays correctly     | Component test   | ⬜     |
+| Smart trim triggers after auto-stop | Integration test | ⬜     |
+| All 610 tests still pass            | Full test suite  | ⬜     |
+| Works on mobile (iOS/Android)       | Manual test      | ⬜     |
 
 ---
 
@@ -620,18 +621,21 @@ frontend/src/
 After T10 completion:
 
 ✅ **User Benefits:**
+
 - Fully automated recording workflow (manual START only)
 - No need to time the STOP button
 - More accurate recordings (no late stops)
 - Clear visual feedback during countdown
 
 ✅ **Technical Benefits:**
+
 - <100KB memory overhead
 - <5ms per-frame performance impact
 - Configurable for different use cases
 - Integrates cleanly with T9 smart trim
 
 ✅ **Code Quality:**
+
 - Clean hook abstraction
 - Comprehensive test coverage
 - Accessible UI components

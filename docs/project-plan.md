@@ -134,7 +134,7 @@ gantt
 ## Notes
 
 - Start date: 2025-10-27. Target completion: ✅ 2025-10-28 (Epic 2 & 5 COMPLETE) / 2025-11-27 (Epic 4 MVP)
-- **Completed (Phase 1):** 
+- **Completed (Phase 1):**
   - ✅ T1 (Pitch Length) - Configurable pitch with 3 presets
   - ✅ T2 (Ball Weight) - Mass-aware smoothing & warnings
   - ✅ T4 (Camera Diagnostics) - FPS inference, exposure detection
