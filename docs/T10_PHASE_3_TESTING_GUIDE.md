@@ -15,31 +15,34 @@
 **Changes Made:**
 
 1. **Imports Added:**
+
    ```typescript
-   import { useAutoStop } from '../hooks/useAutoStop';
-   import { RecordingIndicator } from './RecordingIndicator';
-   import { detectBallInFrame } from '../lib/detection';
+   import { useAutoStop } from "../hooks/useAutoStop";
+   import { RecordingIndicator } from "./RecordingIndicator";
+   import { detectBallInFrame } from "../lib/detection";
    ```
 
 2. **Auto-Stop Hook Initialized:**
+
    ```typescript
    const autoStopConfig = {
      enabled: true,
-     threshold: 30,        // 30 frames without detection
-     minFrames: 10,        // Minimum 10 frames before auto-stop
+     threshold: 30, // 30 frames without detection
+     minFrames: 10, // Minimum 10 frames before auto-stop
      safetyTimeout: 10000, // 10 second max recording
    };
-   
-   const { 
-     state: autoStopState, 
-     onFrame: onAutoStopFrame, 
+
+   const {
+     state: autoStopState,
+     onFrame: onAutoStopFrame,
      reset: resetAutoStop,
      startTimeout,
-     stopTimeout 
+     stopTimeout,
    } = useAutoStop(autoStopConfig);
    ```
 
 3. **Frame Capture Loop Enhanced:**
+
    ```typescript
    // Now runs detection on each frame for auto-stop
    const detection = await detectBallInFrame(frame);
@@ -48,6 +51,7 @@
    ```
 
 4. **Auto-Stop Trigger Watcher:**
+
    ```typescript
    useEffect(() => {
      if (autoStopState.shouldStop && isRecording.current) {
@@ -57,13 +61,11 @@
    ```
 
 5. **Recording Controls Updated:**
+
    ```typescript
-   handleStartRecording:
-     - resetAutoStop()
-     - startTimeout()
-   
-   handleStopRecording:
-     - stopTimeout()
+   handleStartRecording: -resetAutoStop() - startTimeout();
+
+   handleStopRecording: -stopTimeout();
    ```
 
 6. **UI Replaced:**
@@ -84,7 +86,9 @@
 ## 🧪 Manual Testing Checklist
 
 ### Test 1: Basic Auto-Stop Flow ✅
+
 **Steps:**
+
 1. Start dev server: `cd frontend && npm run dev`
 2. Open http://localhost:3000
 3. Grant camera permissions
@@ -108,12 +112,15 @@
 ---
 
 ### Test 2: Manual Stop Override ✅
+
 **Steps:**
+
 1. Start recording
 2. Move ball out of frame (countdown starts)
 3. Click "Stop" button before countdown finishes
 
 **Verify:**
+
 - Recording stops immediately
 - Countdown cancelled
 - Analysis begins
@@ -124,7 +131,9 @@
 ---
 
 ### Test 3: Countdown Reset on Ball Reappearance ✅
+
 **Steps:**
+
 1. Start recording
 2. Move ball out of frame (countdown starts: "Auto-stopping in 25 frames...")
 3. Move ball back into frame BEFORE countdown finishes
@@ -137,7 +146,9 @@
 ---
 
 ### Test 4: Safety Timeout (10 seconds) ✅
+
 **Steps:**
+
 1. Start recording
 2. Keep ball in frame continuously
 3. Wait more than 10 seconds
@@ -148,7 +159,9 @@
 ---
 
 ### Test 5: Minimum Frames Requirement ✅
+
 **Steps:**
+
 1. Start recording
 2. Immediately cover camera (no ball)
 3. **Verify:** Countdown starts BUT recording doesn't stop until at least 10 frames captured
@@ -158,12 +171,15 @@
 ---
 
 ### Test 6: Mobile Responsive Layout ✅
+
 **Steps:**
+
 1. Resize browser to mobile width (< 640px)
 2. Or test on actual mobile device
 3. Start recording
 
 **Verify:**
+
 - Frame count hidden (saves space)
 - Stop button shows icon only (⏹)
 - Countdown text compact
@@ -175,7 +191,9 @@
 ---
 
 ### Test 7: Multiple Deliveries / Reset ✅
+
 **Steps:**
+
 1. Complete a delivery (let auto-stop trigger)
 2. View results
 3. Click "New Delivery" button in header
@@ -190,10 +208,12 @@
 ---
 
 ### Test 8: Rapid Ball Flickering ✅
+
 **Steps:**
+
 1. Start recording
 2. Rapidly move ball in/out of frame (10-20 times)
-3. **Verify:** 
+3. **Verify:**
    - Countdown starts/stops with each movement
    - Counter resets each time ball reappears
    - No stuck states
@@ -203,7 +223,9 @@
 ---
 
 ### Test 9: Very Short Delivery ✅
+
 **Steps:**
+
 1. Start recording
 2. Manually stop after 5-8 frames (before 10 frame minimum)
 3. **Verify:**
@@ -216,7 +238,9 @@
 ---
 
 ### Test 10: Performance Check ✅
+
 **Steps:**
+
 1. Open browser DevTools (F12)
 2. Go to Performance tab
 3. Start recording
@@ -225,6 +249,7 @@
 6. Check performance metrics
 
 **Verify:**
+
 - No frame drops during recording
 - Detection adds < 10ms per frame
 - Smooth countdown animation
@@ -237,16 +262,20 @@
 ## 🐛 Known Issues / Things to Watch
 
 ### Potential Issues:
+
 1. **Per-frame detection might be slow**
+
    - Watch for lag during recording
    - Check FPS counter stays at 30
    - If slow, may need to throttle detection (every 2-3 frames)
 
 2. **Countdown might not appear if detection always succeeds**
+
    - This is actually correct behavior!
    - Try covering camera to test
 
 3. **Detection failures treated as "no ball"**
+
    - If detector crashes, auto-stop triggers
    - Check console for detection errors
 
@@ -255,10 +284,12 @@
    - Test on actual mobile device
 
 ### Console Warnings to Ignore:
+
 - Next.js workspace root warning (expected)
 - Watchman recrawl warnings (expected)
 
 ### Errors that Should NOT Appear:
+
 - ❌ "Detection failed" repeatedly
 - ❌ "Cannot read property of undefined" in auto-stop
 - ❌ React warnings about missing dependencies
@@ -269,6 +300,7 @@
 ## 📊 Success Criteria
 
 ### Must Work:
+
 ✅ Auto-stop triggers after 30 consecutive empty frames  
 ✅ Manual stop always works (overrides auto-stop)  
 ✅ Countdown resets when ball reappears  
@@ -276,36 +308,41 @@
 ✅ Minimum 10 frames before auto-stop  
 ✅ UI shows countdown with progress ring  
 ✅ Mobile responsive layout  
-✅ New Delivery resets auto-stop state  
+✅ New Delivery resets auto-stop state
 
 ### Performance:
+
 ✅ < 10ms overhead per frame for detection  
 ✅ Smooth 30 FPS recording  
 ✅ No frame drops  
-✅ Countdown updates at 30 FPS  
+✅ Countdown updates at 30 FPS
 
 ### UX:
+
 ✅ Clear visual feedback (countdown, progress ring)  
 ✅ Time estimate accurate  
 ✅ Manual stop always visible and clickable  
-✅ No confusing states  
+✅ No confusing states
 
 ---
 
 ## 🔧 Testing Commands
 
 ### Start Dev Server:
+
 ```bash
 cd /Users/viknarasimhan/Documents/Speedometer/frontend
 npm run dev
 ```
 
 ### Access Locally:
+
 ```
 http://localhost:3000
 ```
 
 ### Mobile Testing (ngrok):
+
 ```bash
 # Terminal 1: Dev server
 npm run dev
@@ -317,11 +354,13 @@ ngrok http 3000
 ```
 
 ### Check Build:
+
 ```bash
 npm run build
 ```
 
 ### Run Tests:
+
 ```bash
 npm test
 ```
@@ -331,6 +370,7 @@ npm test
 ## 📸 Expected UI Screenshots
 
 ### Recording State:
+
 ```
 ┌────────────────────────────────────────┐
 │  ● REC    45 frames    [Stop]          │  ← RecordingIndicator
@@ -338,6 +378,7 @@ npm test
 ```
 
 ### Countdown State:
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  ● REC  45 frames  [⏱ 15 frames (0.5s)]  [Stop]   │
@@ -347,6 +388,7 @@ npm test
 ```
 
 ### Mobile State:
+
 ```
 ┌─────────────────────┐
 │  ● REC  [⏱ 15]  ⏹  │
@@ -358,6 +400,7 @@ npm test
 ## 🚀 Next Steps After Testing
 
 ### If Tests Pass:
+
 1. Run full test suite: `npm test`
 2. Verify no regressions (610 tests should still pass)
 3. Commit Phase 3 changes
@@ -365,6 +408,7 @@ npm test
 5. Move to Phase 5: Documentation
 
 ### If Issues Found:
+
 1. Document specific failures
 2. Check console errors
 3. Note performance problems
@@ -382,30 +426,32 @@ npm test
 **Screen Size:** [1920x1080 / Mobile 375x667 / etc.]
 
 #### Test Results:
+
 - [ ] Test 1: Basic Auto-Stop - PASS / FAIL
-  - Notes: 
-  
+  - Notes:
 - [ ] Test 2: Manual Override - PASS / FAIL
   - Notes:
-  
 - [ ] Test 3: Countdown Reset - PASS / FAIL
   - Notes:
 
 [...continue for all tests...]
 
 #### Performance Notes:
-- FPS during recording: 
-- Detection latency: 
-- Memory usage: 
-- Any lag noticed: 
+
+- FPS during recording:
+- Detection latency:
+- Memory usage:
+- Any lag noticed:
 
 #### Issues Found:
-1. 
-2. 
+
+1.
+2.
 
 #### Overall Assessment:
+
 - Ready to commit: YES / NO
-- Blockers: 
+- Blockers:
 ```
 
 ---
