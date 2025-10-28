@@ -24,6 +24,12 @@ def download_cricket_ball_dataset(api_key: str, output_dir: str = "./data/cricke
         api_key: Roboflow API key (get from https://app.roboflow.com/settings/api)
         output_dir: Directory to save the dataset
     """
+    # Validate API key format (basic validation)
+    if not api_key or len(api_key) < 10 or not api_key.replace('-', '').replace('_', '').isalnum():
+        print("❌ Error: Invalid API key format")
+        print("   API key should be alphanumeric (with optional hyphens/underscores)")
+        sys.exit(1)
+    
     try:
         from roboflow import Roboflow
     except ImportError:

@@ -75,7 +75,7 @@ from PIL import Image
 API_KEY = "your_api_key_here"
 
 # Load image
-image_path = "cricket_ball_image.jpg"
+image_path = "path/to/your/image.jpg"
 
 # Make prediction request
 with open(image_path, "rb") as f:

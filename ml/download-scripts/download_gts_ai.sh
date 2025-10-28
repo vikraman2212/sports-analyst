@@ -69,7 +69,10 @@ echo ""
 echo "🔄 Extracting dataset..."
 
 # Extract ZIP
-cd "${OUTPUT_DIR}"
+cd "${OUTPUT_DIR}" || {
+    echo "❌ Failed to change to output directory: ${OUTPUT_DIR}"
+    exit 1
+}
 unzip -q "$(basename "$ZIP_FILE")" || {
     echo "❌ Extraction failed"
     exit 1
@@ -96,17 +99,17 @@ if [ ${#MISSING_FILES[@]} -eq 0 ]; then
     echo "📊 Dataset Contents:"
     
     if [ -d "train" ]; then
-        TRAIN_COUNT=$(find train -name "*.jpg" -o -name "*.png" | wc -l)
+        TRAIN_COUNT=$(find train -maxdepth 2 -name "*.jpg" -o -name "*.png" | wc -l)
         echo "   - train/  : ${TRAIN_COUNT} images"
     fi
     
     if [ -d "valid" ]; then
-        VALID_COUNT=$(find valid -name "*.jpg" -o -name "*.png" | wc -l)
+        VALID_COUNT=$(find valid -maxdepth 2 -name "*.jpg" -o -name "*.png" | wc -l)
         echo "   - valid/  : ${VALID_COUNT} images"
     fi
     
     if [ -d "test" ]; then
-        TEST_COUNT=$(find test -name "*.jpg" -o -name "*.png" | wc -l)
+        TEST_COUNT=$(find test -maxdepth 2 -name "*.jpg" -o -name "*.png" | wc -l)
         echo "   - test/   : ${TEST_COUNT} images"
     fi
     

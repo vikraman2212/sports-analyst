@@ -223,10 +223,10 @@
       "license": {
         "type": "Custom Commercial",
         "fullName": "GTS AI Custom License",
-        "commercialUse": false,
+        "commercialUse": "requires-license",
         "requiresAttribution": true,
         "openSource": false,
-        "notes": "Evaluation allowed, commercial deployment requires license purchase",
+        "notes": "Evaluation allowed, commercial deployment requires license purchase from GTS AI",
         "evaluationAllowed": true
       },
       "dataset": {
