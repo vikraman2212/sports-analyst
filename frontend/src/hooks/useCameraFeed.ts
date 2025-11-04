@@ -270,11 +270,14 @@ export function useCameraFeed(
                   const requestedFPS = targetFPS || 60;
                   const gotTargetFPS = settings.frameRate >= requestedFPS;
                   
-                  console.warn(`Camera initialized: ${settings.width}x${settings.height} @ ${settings.frameRate} FPS`);
-                  console.warn(`Camera: ${cameraLabel} (facing: ${facing}, requested: ${facingMode})`);
+                  // eslint-disable-next-line no-console
+                  console.info(`Camera initialized: ${settings.width}x${settings.height} @ ${settings.frameRate} FPS`);
+                  // eslint-disable-next-line no-console
+                  console.info(`Camera: ${cameraLabel} (facing: ${facing}, requested: ${facingMode})`);
                   
                   if (!gotTargetFPS && requestedFPS > 30) {
-                    console.warn(`⚠️ Requested ${requestedFPS} FPS but got ${settings.frameRate} FPS - device limitation`);
+                    // eslint-disable-next-line no-console
+                    console.info(`⚠️ Requested ${requestedFPS} FPS but got ${settings.frameRate} FPS - device limitation`);
                   }
                 }
               }

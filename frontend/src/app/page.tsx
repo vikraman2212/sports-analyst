@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { CameraView } from '@/components/CameraView';
 import { SpeedDisplay } from '@/components/SpeedDisplay';
@@ -46,20 +46,19 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showQualityBanner, setShowQualityBanner] = useState(true);
 
-  // Initialize banner visibility from localStorage (client-side only)
-  // If previously dismissed, keep it hidden across sessions
-  if (typeof window !== 'undefined') {
-    // Wrap in try/catch to avoid exceptions in strict/privacy modes
-    try {
-      const dismissed = localStorage.getItem('qualityBannerDismissed') === 'true';
-      if (dismissed && showQualityBanner) {
-        // Avoid extra renders if already hidden
-        setShowQualityBanner(false);
+  // Initialize banner visibility from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const dismissed = localStorage.getItem('qualityBannerDismissed') === 'true';
+        if (dismissed) {
+          setShowQualityBanner(false);
+        }
+      } catch {
+        // Ignore storage failures and show banner by default
       }
-    } catch {
-      // Ignore storage failures and show banner by default
     }
-  }
+  }, []);
   
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
@@ -219,14 +218,7 @@ export default function Home() {
    * Saves settings to active calibration profile (including default)
    */
   const handleCameraSettingsChanged = useCallback((settings: CameraConstraints) => {
-    // eslint-disable-next-line no-console
-    console.log('[page.tsx] handleCameraSettingsChanged CALLED. Settings:', settings);
-    // eslint-disable-next-line no-console
-    console.log('[page.tsx] activeProfile:', activeProfile);
-
     if (!activeProfile) {
-      // eslint-disable-next-line no-console
-      console.log('[page.tsx] ERROR: No active profile, cannot save settings');
       return;
     }
 
@@ -253,19 +245,10 @@ export default function Home() {
       deviceInfo.userAgent = navigator.userAgent;
     }
 
-    // eslint-disable-next-line no-console
-    console.log('[page.tsx] Calling updateProfile with ID:', activeProfile.id, 'Data:', {
-      cameraSettings: settings,
-      deviceInfo,
-    });
-
     updateProfile(activeProfile.id, {
       cameraSettings: settings,
       deviceInfo,
     });
-
-    // eslint-disable-next-line no-console
-    console.log('[page.tsx] updateProfile called successfully');
   }, [activeProfile, updateProfile]);
 
   /**

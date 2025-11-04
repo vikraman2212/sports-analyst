@@ -17,6 +17,7 @@ const RESOLUTION_PRESETS = [
 ] as const;
 
 const DEFAULT_FPS_OPTIONS = [15, 24, 30, 60];
+const MODAL_CLOSE_DELAY_MS = 300; // Delay before closing modal after successful apply
 
 function findPresetKey(width?: number, height?: number): string | null {
   if (!width || !height) {
@@ -142,7 +143,7 @@ export function CameraSettings({ stream, onClose, onSettingsChanged, initialSett
       // Small delay to let user see the success state
       setTimeout(() => {
         onClose();
-      }, 300);
+      }, MODAL_CLOSE_DELAY_MS);
     }
 
     setApplying(false);
