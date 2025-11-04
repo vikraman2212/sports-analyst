@@ -2729,7 +2729,9 @@
       "start": "2025-11-04",
       "durationDays": 0.5,
       "dependsOn": [],
-      "status": "in-progress",
+      "status": "completed",
+      "completedAt": "2025-11-04",
+      "completedOn": "2025-11-04T20:00:00+11:00",
       "owner": "backend",
       "deliverables": [
         "GitHub Actions workflow .github/workflows/ci.yml with backend docker build job",
@@ -2769,7 +2771,9 @@
       "start": "2025-11-04",
       "durationDays": 1,
       "dependsOn": [],
-      "status": "in-progress",
+      "status": "completed",
+      "completedAt": "2025-11-04",
+      "completedOn": "2025-11-04T20:00:00+11:00",
       "owner": "frontend",
       "deliverables": [
         "GitHub Actions workflow .github/workflows/ci.yml with frontend job",

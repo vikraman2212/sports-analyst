@@ -98,13 +98,15 @@ gantt
 
 ## CI/CD Backlog
 
-- T19 — CI: Backend Docker Build (no deploy)
+- ✅ T19 — CI: Backend Docker Build (no deploy) — **COMPLETED 2025-11-04**
   - Build `Dockerfile.backend` on PR and main using buildx. No push/deploy.
   - Acceptance: PRs and main build clean; failures gate merges.
+  - PR: #38
 
-- T20 — CI: Frontend Validation + Smoke
-  - pnpm install, typecheck, lint, Jest, next build; upload artifacts; optional ORT-Web smoke behind env flag.
+- ✅ T20 — CI: Frontend Validation + Smoke — **COMPLETED 2025-11-04**
+  - Migrated to pnpm; typecheck, lint, Jest, next build; upload artifacts; optional ORT-Web smoke behind env flag.
   - Acceptance: CI gates on typecheck/lint/tests/build; artifacts available; smoke test skippable.
+  - PR: #38
 
 - T21 — CI: Browser E2E Tests
   - Playwright E2E with camera/canvas mocks; CI headless run; traces/videos on failure.
