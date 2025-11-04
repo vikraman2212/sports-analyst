@@ -1,101 +1,101 @@
 name: CI
 
 on:
-  pull_request:
-    branches: [main, speed-001-cricket-ball-tracking]
-  push:
-    branches: [main, speed-001-cricket-ball-tracking]
+    pull_request:
+        branches: [main, speed-001-cricket-ball-tracking]
+    push:
+        branches: [main, speed-001-cricket-ball-tracking]
 
 jobs:
-  # T19: Backend Docker Build (no deploy)
-  backend-build:
-    name: Build Backend Docker Image
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # T19: Backend Docker Build (no deploy)
+    backend-build:
+        name: Build Backend Docker Image
+        runs-on: ubuntu-latest
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Build backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile.backend
-          push: false
-          tags: sports-analyst-backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
 
-  # T20: Frontend Validation + Smoke
-  frontend-ci:
-    name: Frontend CI (Typecheck, Lint, Test, Build)
-    runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ./frontend
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+            - name: Build backend image
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  file: ./Dockerfile.backend
+                  push: false
+                  tags: sports-analyst-backend:${{ github.sha }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+    # T20: Frontend Validation + Smoke
+    frontend-ci:
+        name: Frontend CI (Typecheck, Lint, Test, Build)
+        runs-on: ubuntu-latest
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.1
+        defaults:
+            run:
+                working-directory: ./frontend
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9.15.1
 
-      - name: Typecheck
-        run: pnpm typecheck
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - name: Lint
-        run: pnpm lint
+            - name: Setup pnpm cache
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
 
-      - name: Run tests
-        run: pnpm test -- --ci --coverage --maxWorkers=2
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Build production
-        run: pnpm build
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:8000' }}
+            - name: Typecheck
+              run: pnpm typecheck
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: nextjs-build-${{ github.sha }}
-          path: frontend/.next
-          retention-days: 7
+            - name: Lint
+              run: pnpm lint
 
-      - name: Optional ORT-Web smoke test
-        if: env.MODEL_URL != ''
-        run: |
-          node -e "
-          const ort = require('onnxruntime-web');
-          console.log('✅ onnxruntime-web loaded successfully');
-          console.log('Available backends:', ort.env.wasm.numThreads);
-          "
-        env:
-          MODEL_URL: ${{ secrets.MODEL_URL }}
+            - name: Run tests
+              run: pnpm test -- --ci --coverage --maxWorkers=2
+
+            - name: Build production
+              run: pnpm build
+              env:
+                  NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:8000' }}
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: nextjs-build-${{ github.sha }}
+                  path: frontend/.next
+                  retention-days: 7
+
+            - name: Optional ORT-Web smoke test
+              if: env.MODEL_URL != ''
+              run: |
+                  node -e "
+                  const ort = require('onnxruntime-web');
+                  console.log('✅ onnxruntime-web loaded successfully');
+                  console.log('Available backends:', ort.env.wasm.numThreads);
+                  "
+              env:
+                  MODEL_URL: ${{ secrets.MODEL_URL }}
