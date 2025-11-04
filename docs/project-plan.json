@@ -2729,7 +2729,7 @@
       "start": "2025-11-04",
       "durationDays": 0.5,
       "dependsOn": [],
-      "status": "planned",
+      "status": "in-progress",
       "owner": "backend",
       "deliverables": [
         "GitHub Actions workflow .github/workflows/ci.yml with backend docker build job",
@@ -2757,7 +2757,9 @@
       ],
       "github": {
         "issueNumber": 34,
-        "url": "https://github.com/vikraman2212/sports-analyst/issues/34"
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/34",
+        "prNumber": 38,
+        "prUrl": "https://github.com/vikraman2212/sports-analyst/pull/38"
       }
     },
     {
@@ -2767,7 +2769,7 @@
       "start": "2025-11-04",
       "durationDays": 1,
       "dependsOn": [],
-      "status": "planned",
+      "status": "in-progress",
       "owner": "frontend",
       "deliverables": [
         "GitHub Actions workflow .github/workflows/ci.yml with frontend job",
@@ -2798,7 +2800,9 @@
       ],
       "github": {
         "issueNumber": 35,
-        "url": "https://github.com/vikraman2212/sports-analyst/issues/35"
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/35",
+        "prNumber": 38,
+        "prUrl": "https://github.com/vikraman2212/sports-analyst/pull/38"
       }
     },
     {
