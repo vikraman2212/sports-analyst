@@ -14,7 +14,7 @@ import {
   isShareSupported,
   isClipboardSupported,
 } from '../../lib/export/jsonExport';
-import type { DeliveryResult, CalibrationProfile, TrajectoryPoint } from '../../lib/types';
+import type { DeliveryResult, TrajectoryPoint } from '../../lib/types';
 import { createMockCalibration } from '../testHelpers';
 
 describe('JSON Export Utility', () => {

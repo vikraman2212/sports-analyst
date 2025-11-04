@@ -3,7 +3,7 @@
  */
 
 import { analyzeDelivery } from '@/lib/analyzeDelivery';
-import type { CalibrationProfile, FrameSample } from '@/lib/types';
+import type { FrameSample } from '@/lib/types';
 import { createMockCalibration } from '../testHelpers';
 
 describe('Ball Weight Integration Test', () => {

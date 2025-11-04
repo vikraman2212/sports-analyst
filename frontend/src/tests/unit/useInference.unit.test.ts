@@ -12,7 +12,7 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useInference, getInferenceErrorMessage } from '../../hooks/useInference';
-import type { FrameSample, CalibrationProfile, DeliveryResult } from '../../lib/types';
+import type { FrameSample, DeliveryResult } from '../../lib/types';
 import * as analyzeDeliveryModule from '../../lib/analyzeDelivery';
 import { createMockCalibration } from '../testHelpers';
 

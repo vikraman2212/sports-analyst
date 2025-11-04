@@ -3,7 +3,7 @@
  */
 
 import { calculateSpeed } from '@/lib/speed-calculation/speed';
-import type { CalibrationProfile, TrajectoryPoint } from '@/lib/types';
+import type { TrajectoryPoint } from '@/lib/types';
 import { createMockCalibration } from '../testHelpers';
 
 describe('Speed Calculation with Ball Mass', () => {

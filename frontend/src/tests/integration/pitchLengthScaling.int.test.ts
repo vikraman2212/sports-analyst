@@ -2,7 +2,7 @@
  * Integration Test: Speed scales with pitch length selection
  */
 
-import type { FrameSample, CalibrationProfile } from '@/lib/types';
+import type { FrameSample } from '@/lib/types';
 import { createMockCalibration } from '../testHelpers';
 
 function createNonBlankImageData(width: number, height: number): ImageData {
@@ -30,8 +30,6 @@ describe('Integration: pitch length scaling', () => {
 
   it('analyzeDelivery produces speed proportional to referenceDistanceMeters', async () => {
     const { analyzeDelivery } = await import('@/lib/analyzeDelivery');
-
-    const pitchLengthPixels = 900; // arbitrary calibration pixel length
 
     const calibStandard = createMockCalibration({ballMassGrams: 156});
 
