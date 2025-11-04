@@ -48,6 +48,8 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/build/
+frontend/.pnpm-store/
+.pnpm-debug.log
 frontend/.env*.local
 frontend/.turbo/
 

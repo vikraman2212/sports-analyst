@@ -44,6 +44,22 @@ export default function Home() {
   const [resetTrigger, setResetTrigger] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showQualityBanner, setShowQualityBanner] = useState(true);
+
+  // Initialize banner visibility from localStorage (client-side only)
+  // If previously dismissed, keep it hidden across sessions
+  if (typeof window !== 'undefined') {
+    // Wrap in try/catch to avoid exceptions in strict/privacy modes
+    try {
+      const dismissed = localStorage.getItem('qualityBannerDismissed') === 'true';
+      if (dismissed && showQualityBanner) {
+        // Avoid extra renders if already hidden
+        setShowQualityBanner(false);
+      }
+    } catch {
+      // Ignore storage failures and show banner by default
+    }
+  }
   
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
@@ -317,6 +333,27 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quality Notice Banner */}
+        {showQualityBanner && (
+          <div className="mb-6 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-4 relative" role="region" aria-label="Environment quality notice">
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.setItem('qualityBannerDismissed', 'true');
+                } catch {}
+                setShowQualityBanner(false);
+              }}
+              aria-label="Dismiss quality notice"
+              className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md p-1 text-yellow-900/80 hover:text-yellow-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 dark:text-yellow-100/80 dark:hover:text-yellow-100"
+            >
+              <span aria-hidden>✕</span>
+            </button>
+            <p className="text-sm text-yellow-900 dark:text-yellow-100 pr-8">
+              <span className="font-semibold">Heads up:</span> Best results require good lighting and a stable, high-quality camera. In low light or with low-quality cameras, detection accuracy and speed may degrade. Check the <span className="font-medium">Camera Guidance</span> panel for tips.
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Camera View Section */}
           <div className="space-y-4">

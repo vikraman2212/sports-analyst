@@ -96,6 +96,24 @@ gantt
     Configurable Ball Weight (T2)      :done, t2, 2025-10-27, 1d
     Mobile Testing via ngrok (T7)      :t7, 2025-10-27, 1d
 
+## CI/CD Backlog
+
+- T19 — CI: Backend Docker Build (no deploy)
+  - Build `Dockerfile.backend` on PR and main using buildx. No push/deploy.
+  - Acceptance: PRs and main build clean; failures gate merges.
+
+- T20 — CI: Frontend Validation + Smoke
+  - pnpm install, typecheck, lint, Jest, next build; upload artifacts; optional ORT-Web smoke behind env flag.
+  - Acceptance: CI gates on typecheck/lint/tests/build; artifacts available; smoke test skippable.
+
+- T21 — CI: Browser E2E Tests
+  - Playwright E2E with camera/canvas mocks; CI headless run; traces/videos on failure.
+  - Acceptance: Runs on PRs; failures upload artifacts; gates merges.
+
+- T22 — DX: Pre-commit Unit Test Gate
+  - Husky hook to run Jest quickly on staged changes; docs for setup and bypass.
+  - Acceptance: Failing tests block commits; setup reproducible; bypass documented.
+
   section Detection
   Migrate to YOLOv8 (T3)             :t3, 2025-10-30, 10d
   Survey pretrained models (T3A)     :t3a, 2025-10-30, 2d

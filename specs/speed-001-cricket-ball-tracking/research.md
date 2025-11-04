@@ -111,3 +111,41 @@ This document captures decisions, rationale, alternatives, risks, and follow-ups
 All required decisions documented; no remaining blockers for Phase 1 artifacts.
 
 ---
+
+## Pretrained Model & Dataset Survey (T3A)
+
+This section tracks the survey of existing detectors/datasets for cricket ball detection. Goal: shortlist 2–3 viable candidates for quick benchmarking in T3B.
+
+### Evaluation criteria
+
+- Task suitability: single small, fast object (cricket ball) at 720p–1080p
+- Labeled data volume and quality: clear bounding boxes, motion blur coverage
+- License: permits internal evaluation and derivative work (if needed)
+- Format: YOLOv5/8 compatible or convertible; includes class schema
+- Performance signals: example videos, reported metrics, model size (<40MB ideal)
+- Maintenance: active repo or reproducible training instructions
+
+### Initial candidates
+
+| Name                                                | Source                                                       | License                  | Task/Classes           | Images              | Format                         | Notes                                                                                    |
+| --------------------------------------------------- | ------------------------------------------------------------ | ------------------------ | ---------------------- | ------------------- | ------------------------------ | ---------------------------------------------------------------------------------------- |
+| Roboflow Universe: Cricket Ball (multiple projects) | https://universe.roboflow.com/search?q=cricket%20ball        | Varies per project (TBD) | Detect: ball (1 class) | TBD                 | YOLOv5/YOLOv8 export available | Choose projects with ≥500 images, check license and quality; verify motion blur coverage |
+| cricket-ball-detection-yolov8                       | https://github.com/irfan092-ai/cricket-ball-detection-yolov8 | TBD (check repo)         | Detect: ball (1 class) | TBD                 | YOLOv8                         | Includes training code; verify dataset source/rights and sample results                  |
+| Internal practice clips (future)                    | Local recordings                                             | Internal                 | Detect: ball (1 class) | Target ≥1000 frames | YOLOv8                         | Use if pretrained options underperform; pair with augmentations (blur/brightness/scale)  |
+
+References
+
+- Ultralytics Detect Docs: https://docs.ultralytics.com/tasks/detect/
+- Roboflow Universe search: https://universe.roboflow.com/search?q=cricket%20ball
+- GitHub example: https://github.com/irfan092-ai/cricket-ball-detection-yolov8
+- Trajectory+YOLO pipeline example: https://github.com/HiteshDereddy/RAIE-Transformer
+
+### Next 48h plan
+
+1. Shortlist precisely two Roboflow projects (≥500 images each) with permissive licenses; capture: link, license, image count, resolution, classes, sample images.
+2. Verify the GitHub repo’s dataset provenance and license; note any blockers.
+3. Prepare download instructions/scripts for each candidate (prefer YOLOv8 format; fall back to COCO → convert if needed).
+4. Define benchmark harness inputs/outputs for T3B: input clips list + per-frame detections JSON; metrics: P/R on ball-present frames, FPS on target device, qualitative notes.
+5. Decide go/no-go per candidate for T3B run.
+
+Status: In progress (initialized survey and criteria; detailed collection next).

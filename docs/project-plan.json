@@ -2721,6 +2721,163 @@
         "Related Task T16: #30 (Camera Calibration)",
         "UX best practices for overlays and modals"
       ]
+    },
+    {
+      "id": "T19",
+      "name": "CI: Backend Docker Build (no deploy)",
+      "description": "Add CI job to build the FastAPI backend Docker image on PRs and main to catch regressions. Do not push or deploy yet.",
+      "start": "2025-11-04",
+      "durationDays": 0.5,
+      "dependsOn": [],
+      "status": "planned",
+      "owner": "backend",
+      "deliverables": [
+        "GitHub Actions workflow .github/workflows/ci.yml with backend docker build job",
+        "Builds Dockerfile.backend using docker buildx in CI",
+        "Blocks PR if image build fails"
+      ],
+      "acceptanceCriteria": [
+        "PRs build backend image successfully on CI",
+        "Main branch builds without errors",
+        "No deploy or push to registry occurs"
+      ],
+      "likelyFiles": [
+        ".github/workflows/ci.yml",
+        "Dockerfile.backend"
+      ],
+      "references": [
+        "GitHub Actions: workflows https://docs.github.com/actions/using-workflows/about-workflows",
+        "docker buildx cache: https://docs.docker.com/build/cache/",
+        "actions/setup-docker: https://github.com/docker/setup-buildx-action"
+      ],
+      "nextSteps": [
+        "Create .github/workflows/ci.yml with backend job using docker/build-push-action@v6 (build-only)",
+        "Enable buildx cache-from/cache-to to speed up rebuilds",
+        "Trigger on pull_request and push to main; gate PRs on build status"
+      ],
+      "github": {
+        "issueNumber": 34,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/34"
+      }
+    },
+    {
+      "id": "T20",
+      "name": "CI: Frontend Validation + Smoke",
+      "description": "Set up frontend CI: pnpm install, typecheck, lint, unit tests (Jest), production build (Turbopack), and a minimal ORT-Web smoke test (optional URL-based). Upload build artifacts.",
+      "start": "2025-11-04",
+      "durationDays": 1,
+      "dependsOn": [],
+      "status": "planned",
+      "owner": "frontend",
+      "deliverables": [
+        "GitHub Actions workflow .github/workflows/ci.yml with frontend job",
+        "Typecheck (tsc), ESLint, Jest in CI mode",
+        "next build (Turbopack) with artifact upload",
+        "Optional ORT-Web smoke test behind env var"
+      ],
+      "acceptanceCriteria": [
+        "PRs run and gate on typecheck/lint/tests/build",
+        "Artifacts available for download from CI",
+        "Smoke test passes or is skipped when no model URL is configured"
+      ],
+      "likelyFiles": [
+        ".github/workflows/ci.yml",
+        "frontend/package.json",
+        "frontend/jest.config.js"
+      ],
+      "references": [
+        "actions/setup-node: https://github.com/actions/setup-node",
+        "pnpm/action-setup: https://github.com/pnpm/action-setup",
+        "Next.js build cache: https://nextjs.org/docs/app/building-your-application/deploying/ci",
+        "onnxruntime-web: https://onnxruntime.ai/docs/tutorials/web/"
+      ],
+      "nextSteps": [
+        "Add frontend job to CI with setup-node and pnpm cache",
+        "Run pnpm install, pnpm typecheck, pnpm lint, pnpm test -- --ci, pnpm build",
+        "Upload .next/standalone or build artifacts; add optional smoke script behind MODEL_URL"
+      ],
+      "github": {
+        "issueNumber": 35,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/35"
+      }
+    },
+    {
+      "id": "T21",
+      "name": "CI: Browser E2E Tests",
+      "description": "Introduce Playwright-based E2E tests with camera/canvas mocks and run them headless in CI.",
+      "start": "2025-11-05",
+      "durationDays": 1,
+      "dependsOn": ["T20"],
+      "status": "planned",
+      "owner": "frontend",
+      "deliverables": [
+        "Playwright config and basic scenarios (home page loads, guidance visible, record/stop flow mocked)",
+        "CI job executing E2E suite on PR",
+        "Artifacts: traces/videos on failure"
+      ],
+      "acceptanceCriteria": [
+        "E2E suite runs headless in CI across at least 1 browser",
+        "Failures upload traces/videos for debugging",
+        "PRs are gated by E2E status"
+      ],
+      "likelyFiles": [
+        ".github/workflows/ci.yml",
+        "frontend/playwright.config.ts",
+        "frontend/tests/e2e/*"
+      ],
+      "references": [
+        "Playwright getting started: https://playwright.dev/docs/intro",
+        "Playwright GitHub Action: https://github.com/microsoft/playwright-github-action",
+        "Mocking camera in tests: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#testing"
+      ],
+      "nextSteps": [
+        "Install Playwright in frontend and scaffold 2-3 basic tests",
+        "Configure CI to install browsers and run headless suite",
+        "Upload trace/video on failure for debugging"
+      ],
+      "github": {
+        "issueNumber": 36,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/36"
+      }
+    },
+    {
+      "id": "T22",
+      "name": "DX: Pre-commit Unit Test Gate",
+      "description": "Add a pre-commit hook that runs unit tests and blocks commits when they fail (frontend scope initially).",
+      "start": "2025-11-04",
+      "durationDays": 0.25,
+      "dependsOn": [],
+      "status": "planned",
+      "owner": "all",
+      "deliverables": [
+        "Husky pre-commit hook for frontend: run Jest quickly",
+        "Docs on installing git hooks (pnpm prepare)",
+        "Optional: filter to only changed packages/tests"
+      ],
+      "acceptanceCriteria": [
+        "Commit is blocked when unit tests fail locally",
+        "Hook install documented and reproducible",
+        "Hook can be bypassed with --no-verify (documented)"
+      ],
+      "likelyFiles": [
+        "frontend/package.json",
+        ".husky/pre-commit",
+        "docs/manual-testing.md"
+      ],
+      "references": [
+        "Husky: https://typicode.github.io/husky/",
+        "Jest changed files: https://jestjs.io/docs/cli#--findrelatedtests-spaceseparatedlistofsourcefiles",
+        "Git hooks docs: https://git-scm.com/docs/githooks#_hooks"
+      ],
+      "nextSteps": [
+        "Add husky and prepare script in frontend/package.json",
+        "Create .husky/pre-commit to run pnpm test -- --bail --findRelatedTests",
+        "Document setup and bypass in docs/manual-testing.md"
+      ],
+      "github": {
+        "issueNumber": 37,
+        "url": "https://github.com/vikraman2212/sports-analyst/issues/37"
+      }
     }
   ]
 }
