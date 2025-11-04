@@ -8,6 +8,7 @@
  */
 
 import type { FrameSample, CalibrationProfile } from '../../lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 function createNonBlankImageData(width: number, height: number): ImageData {
   const img = new ImageData(width, height);
@@ -33,12 +34,7 @@ describe('Delivery Flow Integration', () => {
     }));
 
     // Mock calibration for 22-yard pitch
-    mockCalibration = {
-      pitchLengthPixels: 500,
-      referenceDistanceMeters: 20.12, // 22 yards
-      homographyMatrix: null,
-      ballMassGrams: 156,
-    };
+    mockCalibration = createMockCalibration({pitchLengthPixels: 500, ballMassGrams: 156});
   });
 
   describe('Complete delivery analysis', () => {

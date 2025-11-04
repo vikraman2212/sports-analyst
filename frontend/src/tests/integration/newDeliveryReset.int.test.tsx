@@ -11,7 +11,8 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { CameraView } from '@/components/CameraView';
-import type { CalibrationProfile, DeliveryResult } from '@/lib/types';
+import type { DeliveryResult } from '@/lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 // Mock hooks
 jest.mock('@/hooks/useCameraFeed');
@@ -40,12 +41,7 @@ describe('New Delivery Reset - Integration', () => {
   let mockCancel: jest.Mock;
   let mockUpdateWithFrame: jest.Mock;
 
-  const mockCalibration: CalibrationProfile = {
-    pitchLengthPixels: 512,
-    referenceDistanceMeters: 20.12,
-    ballMassGrams: 156,
-    homographyMatrix: null,
-  };
+  const mockCalibration = createMockCalibration({pitchLengthPixels: 512, ballMassGrams: 156});
 
   const mockResult: DeliveryResult = {
     speedKmh: 120.5,

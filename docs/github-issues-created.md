@@ -4,9 +4,9 @@ Complete synchronization of project-plan.json tasks to GitHub issues.
 
 ## Summary
 
-- **Total Issues Created:** 15 new issues
+- **Total Issues Created:** 18 new issues (+2 on 2025-10-28)
 - **Existing Issues:** 9 issues (already in GitHub)
-- **Total Coverage:** All 15 tasks now have GitHub tracking
+- **Total Coverage:** All 18 tasks now have GitHub tracking
 
 ## New Issues Created
 
@@ -100,9 +100,33 @@ Complete synchronization of project-plan.json tasks to GitHub issues.
     - Depends on T12 (1 day)
 
 15. **#29: T15 - Player Stats Export & Privacy 🔒**
+
     - Status: PLANNED
     - CSV/JSON export, clear data
     - Depends on T13, T14 (0.5 days)
+
+16. **#30: T16 - Camera Calibration UI & Settings Controls 🎯**
+    - Status: COMPLETED (2025-10-28) ✅
+    - Interactive calibration wizard with profile management
+    - 43 new tests passing (588 total)
+    - Note: Camera settings controls deferred to T17
+
+### New Issues Created (2025-10-28)
+
+17. **#31: T17 - Camera Settings Controls - FPS & Resolution Adjustment ⚙️**
+
+    - Status: PLANNED (High Priority)
+    - Wire existing CameraSettings component to UI
+    - Enable FPS, resolution, exposure adjustment
+    - Depends on T16
+    - Estimated: 1 day (4-6 hours)
+
+18. **#32: T18 - Fix Calibration Overlay UX 🐛**
+    - Status: PLANNED (Medium Priority)
+    - Fix overlay interference with pitch length selector
+    - Improve z-index management and dismiss behavior
+    - Depends on T16
+    - Estimated: 0.5 days (2-3 hours)
 
 ## Existing Issues (Already in GitHub)
 
@@ -133,13 +157,13 @@ All tasks in `docs/project-plan.json` now include GitHub references:
 
 ### By Status
 
-- ✅ **Completed:** 6 tasks (T1, T2, T4, T5, T8, T9)
+- ✅ **Completed:** 7 tasks (T1, T2, T4, T5, T8, T9, T16)
 - 🔴 **Ready:** 2 tasks (T3A, T11)
-- 📋 **Planned:** 7 tasks (T3B-E, T6, T7, T10, T12-15)
+- 📋 **Planned:** 9 tasks (T3B-E, T6, T7, T10, T12-15, T17, T18)
 
 ### By Epic
 
-- **Epic 1 (Main):** T1, T2, T4, T6, T8 - 5 tasks
+- **Epic 1 (Main):** T1, T2, T4, T6, T8, T16 - 6 tasks
 - **Epic 2 (Replay):** T5, T9, T11 - 3 tasks
 - **Epic 3 (Future):** T10 - 1 task
 - **Epic 4 (Player Stats):** T12-15 - 4 tasks
@@ -147,14 +171,16 @@ All tasks in `docs/project-plan.json` now include GitHub references:
 
 ### By Owner
 
-- **Frontend:** 10 tasks
+- **Frontend:** 11 tasks
 - **Backend:** 1 task
 - **ML:** 4 tasks
 - **Fullstack:** 2 tasks
 
 ## Next Actions
 
-1. **Immediate:** Fix T11 bug (2 hours) - camera reset issue
+1. **Immediate (High Priority):**
+   - Fix T11 bug (2 hours) - camera reset issue
+   - Start T16 (3 days) - camera calibration UI (critical usability gap)
 2. **Short-term:** Start T3A (YOLOv8 research) on 2025-10-30
 3. **Medium-term:** Plan Player Stats sprint after YOLOv8 migration
 4. **Ongoing:** Update GitHub issues as tasks progress
@@ -177,14 +203,15 @@ All issues include:
 ## Total Effort Estimate
 
 - **Completed:** 12 days (T1: 3d, T2: 1d, T4: 2d, T5: 1d, T8: 1d, T9: 1d, T11: 0.25d)
-- **Remaining:** 18.75 days
+- **Remaining:** 21.75 days
+  - Camera Calibration: 3 days (T16)
   - YOLOv8: 10 days (T3A-E)
   - Docs/Tests: 4 days (T6)
   - Mobile: 1 day (T7)
   - Auto-Stop: 2 days (T10)
   - Player Stats: 3 days (T12-15)
 
-**Total Project:** ~30.75 days
+**Total Project:** ~33.75 days
 
 ---
 

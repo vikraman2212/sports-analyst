@@ -12,8 +12,9 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useInference, getInferenceErrorMessage } from '../../hooks/useInference';
-import type { FrameSample, CalibrationProfile, DeliveryResult } from '../../lib/types';
+import type { FrameSample, DeliveryResult } from '../../lib/types';
 import * as analyzeDeliveryModule from '../../lib/analyzeDelivery';
+import { createMockCalibration } from '../testHelpers';
 
 // Mock the analyzeDelivery module
 jest.mock('../../lib/analyzeDelivery');
@@ -32,13 +33,6 @@ describe('useInference Hook', () => {
     frameIndex: index,
     timestampMs: index * 33.33, // ~30fps
     imageData: new ImageData(100, 100),
-  });
-
-  // Helper to create mock calibration
-  const createMockCalibration = (): CalibrationProfile => ({
-    pitchLengthPixels: 1006, // 20.12m * 50 pixels/m
-    referenceDistanceMeters: 20.12,
-    homographyMatrix: null,
   });
 
   // Helper to create mock result

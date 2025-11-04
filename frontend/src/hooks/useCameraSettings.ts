@@ -1,0 +1,362 @@
+/**
+ * Hook for managing camera settings via MediaStreamTrack API
+ * Detects capabilities and applies constraints for exposure, ISO, focus, etc.
+ * 
+ * IMPORTANT: Advanced controls (exposure, ISO, focus) are only available on desktop Chrome.
+ * Mobile browsers only support basic constraints (resolution, frameRate, facingMode).
+ */
+
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { CameraConstraints, CameraCapabilities } from '@/lib/types';
+
+export interface BasicCameraSettings {
+  width?: number;
+  height?: number;
+  frameRate?: number;
+  facingMode?: 'user' | 'environment';
+}
+
+export interface UseCameraSettingsReturn {
+  capabilities: CameraCapabilities | null;
+  currentSettings: CameraConstraints | null;
+  applySettings: (settings: CameraConstraints) => Promise<boolean>;
+  applyPreset: (preset: 'auto' | 'fast-motion') => Promise<boolean>;
+  applyBasicSettings: (settings: BasicCameraSettings) => Promise<CameraConstraints | null>;
+  isSupported: boolean;
+  hasAdvancedControls: boolean;
+  error: string | null;
+  lastApplyMessage: string | null;
+  clearLastApplyMessage: () => void;
+}
+
+/**
+ * Detect camera capabilities from MediaStreamTrack
+ */
+function detectCapabilities(track: MediaStreamTrack): CameraCapabilities {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capabilities = track.getCapabilities() as any;
+
+  return {
+    width: capabilities.width,
+    height: capabilities.height,
+    frameRate: capabilities.frameRate,
+    facingMode: capabilities.facingMode,
+    exposureMode: capabilities.exposureMode,
+    exposureTime: capabilities.exposureTime,
+    iso: capabilities.iso,
+    focusMode: capabilities.focusMode,
+    focusDistance: capabilities.focusDistance,
+    whiteBalanceMode: capabilities.whiteBalanceMode,
+    brightness: capabilities.brightness,
+    contrast: capabilities.contrast,
+    saturation: capabilities.saturation,
+    sharpness: capabilities.sharpness,
+    zoom: capabilities.zoom,
+  };
+}
+
+/**
+ * Get current settings from MediaStreamTrack
+ */
+function getCurrentSettings(track: MediaStreamTrack): CameraConstraints {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const settings = track.getSettings() as any;
+
+  return {
+    width: settings.width,
+    height: settings.height,
+    frameRate: settings.frameRate,
+    facingMode: settings.facingMode,
+    exposureMode: settings.exposureMode,
+    exposureTime: settings.exposureTime,
+    iso: settings.iso,
+    focusMode: settings.focusMode,
+    focusDistance: settings.focusDistance,
+    whiteBalanceMode: settings.whiteBalanceMode,
+    brightness: settings.brightness,
+    contrast: settings.contrast,
+    saturation: settings.saturation,
+    sharpness: settings.sharpness,
+    zoom: settings.zoom,
+  };
+}
+
+/**
+ * Hook for managing camera settings
+ */
+export function useCameraSettings(
+  stream: MediaStream | null
+): UseCameraSettingsReturn {
+  const [capabilities, setCapabilities] = useState<CameraCapabilities | null>(null);
+  const [currentSettings, setCurrentSettings] = useState<CameraConstraints | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [lastApplyMessage, setLastApplyMessage] = useState<string | null>(null);
+  const clearLastApplyMessage = useCallback(() => setLastApplyMessage(null), []);
+  const trackRef = useRef<MediaStreamTrack | null>(null);
+
+  // Detect capabilities when stream changes
+  useEffect(() => {
+    if (!stream) {
+      setCapabilities(null);
+      setCurrentSettings(null);
+      trackRef.current = null;
+      setLastApplyMessage(null);
+      return;
+    }
+
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack) {
+      setError('No video track found in stream');
+      return;
+    }
+
+    trackRef.current = videoTrack;
+
+    try {
+      const caps = detectCapabilities(videoTrack);
+      const settings = getCurrentSettings(videoTrack);
+      setCapabilities(caps);
+      setCurrentSettings(settings);
+      setError(null);
+      setLastApplyMessage(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to detect camera capabilities');
+    }
+  }, [stream]);
+
+  /**
+   * Apply camera settings (constraints)
+   */
+  const applySettings = useCallback(async (settings: CameraConstraints): Promise<boolean> => {
+    const track = trackRef.current;
+    if (!track) {
+      setError('No video track available');
+      return false;
+    }
+
+    try {
+      // Build constraints object (only include supported properties)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const constraints: any = {};
+
+      if (settings.exposureMode && capabilities?.exposureMode) {
+        constraints.exposureMode = settings.exposureMode;
+      }
+      if (settings.exposureTime !== undefined && capabilities?.exposureTime) {
+        constraints.exposureTime = settings.exposureTime;
+      }
+      if (settings.iso !== undefined && capabilities?.iso) {
+        constraints.iso = settings.iso;
+      }
+      if (settings.focusMode && capabilities?.focusMode) {
+        constraints.focusMode = settings.focusMode;
+      }
+      if (settings.focusDistance !== undefined && capabilities?.focusDistance) {
+        constraints.focusDistance = settings.focusDistance;
+      }
+      if (settings.whiteBalanceMode && capabilities?.whiteBalanceMode) {
+        constraints.whiteBalanceMode = settings.whiteBalanceMode;
+      }
+      if (settings.brightness !== undefined && capabilities?.brightness) {
+        constraints.brightness = settings.brightness;
+      }
+      if (settings.contrast !== undefined && capabilities?.contrast) {
+        constraints.contrast = settings.contrast;
+      }
+      if (settings.saturation !== undefined && capabilities?.saturation) {
+        constraints.saturation = settings.saturation;
+      }
+      if (settings.sharpness !== undefined && capabilities?.sharpness) {
+        constraints.sharpness = settings.sharpness;
+      }
+      if (settings.zoom !== undefined && capabilities?.zoom) {
+        constraints.zoom = settings.zoom;
+      }
+
+      await track.applyConstraints(constraints);
+
+      // Update current settings
+      const newSettings = getCurrentSettings(track);
+      setCurrentSettings(newSettings);
+      setError(null);
+      setLastApplyMessage(null);
+
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to apply camera settings';
+      setError(message);
+      setLastApplyMessage(message);
+      return false;
+    }
+  }, [capabilities]);
+
+  /**
+   * Apply preset configurations
+   */
+  const applyPreset = useCallback(async (preset: 'auto' | 'fast-motion'): Promise<boolean> => {
+    if (preset === 'auto') {
+      // Reset to automatic modes
+      return applySettings({
+        exposureMode: 'continuous',
+        focusMode: 'continuous',
+        whiteBalanceMode: 'continuous',
+      });
+    }
+
+    if (preset === 'fast-motion') {
+      // Optimize for fast-moving ball
+      const settings: CameraConstraints = {};
+
+      // Manual exposure with low exposure time (fast shutter)
+      if (capabilities?.exposureMode?.includes('manual') && capabilities?.exposureTime) {
+        settings.exposureMode = 'manual';
+        // Use minimum or near-minimum exposure time for fast shutter
+        settings.exposureTime = Math.max(
+          capabilities.exposureTime.min,
+          capabilities.exposureTime.min * 2
+        );
+      }
+
+      // Higher ISO to compensate for low exposure
+      if (capabilities?.iso) {
+        settings.iso = Math.min(
+          capabilities.iso.max,
+          Math.max(capabilities.iso.min, 400) // Target ISO 400 if supported
+        );
+      }
+
+      // Manual focus to avoid autofocus hunting
+      if (capabilities?.focusMode?.includes('manual') && capabilities?.focusDistance) {
+        settings.focusMode = 'manual';
+        // Set focus to mid-range (infinity for outdoor)
+        settings.focusDistance = capabilities.focusDistance.max * 0.8;
+      }
+
+      return applySettings(settings);
+    }
+
+    return false;
+  }, [capabilities, applySettings]);
+
+  /**
+   * Apply basic camera settings (mobile-compatible)
+   * These work on both desktop and mobile browsers
+   */
+  const applyBasicSettings = useCallback(async (settings: BasicCameraSettings): Promise<CameraConstraints | null> => {
+    const track = trackRef.current;
+    if (!track) {
+      setError('No video track available');
+      setLastApplyMessage('No camera stream detected. Please refresh and allow camera access.');
+      return null;
+    }
+
+    try {
+      // Build constraints for basic settings
+      // Try exact constraints first for best results
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const constraints: any = { advanced: [{}] };
+
+      if (settings.width) {
+        constraints.advanced[0].width = { exact: settings.width };
+      }
+      if (settings.height) {
+        constraints.advanced[0].height = { exact: settings.height };
+      }
+      if (settings.frameRate) {
+        constraints.advanced[0].frameRate = { exact: settings.frameRate };
+      }
+      if (settings.facingMode) {
+        constraints.advanced[0].facingMode = { ideal: settings.facingMode };
+      }
+
+      try {
+        await track.applyConstraints(constraints);
+      } catch {
+        // If exact constraints fail, fall back to ideal for more flexibility
+        console.warn('Exact constraints failed, trying ideal constraints');
+        
+        if (settings.width) {
+          constraints.advanced[0].width = { ideal: settings.width };
+        }
+        if (settings.height) {
+          constraints.advanced[0].height = { ideal: settings.height };
+        }
+        if (settings.frameRate) {
+          constraints.advanced[0].frameRate = { ideal: settings.frameRate };
+        }
+        
+        await track.applyConstraints(constraints);
+      }
+
+      // Update current settings after successful apply
+      const newSettings = getCurrentSettings(track);
+      setCurrentSettings(newSettings);
+      setError(null);
+
+      // Compare requested vs actual to surface helpful feedback
+      const messages: string[] = [];
+
+      const requestedWidth = settings.width;
+      const requestedHeight = settings.height;
+      const requestedFPS = settings.frameRate;
+
+      if (requestedWidth && requestedHeight) {
+        if (newSettings.width !== requestedWidth || newSettings.height !== requestedHeight) {
+          messages.push(
+            `Browser limited resolution to ${newSettings.width ?? 'unknown'}×${newSettings.height ?? 'unknown'} despite requesting ${requestedWidth}×${requestedHeight}.`
+          );
+        }
+      }
+
+      if (requestedFPS) {
+        if (!newSettings.frameRate || Math.abs(newSettings.frameRate - requestedFPS) > 1) {
+          messages.push(
+            `Browser provided ${newSettings.frameRate ?? 'unknown'} FPS after requesting ${requestedFPS} FPS.`
+          );
+        }
+      }
+
+      if (messages.length === 0) {
+        const summaryWidth = newSettings.width ?? requestedWidth;
+        const summaryHeight = newSettings.height ?? requestedHeight;
+        const summaryFPS = newSettings.frameRate ?? requestedFPS;
+        if (summaryWidth && summaryHeight && summaryFPS) {
+          setLastApplyMessage(`Applied ${summaryWidth}×${summaryHeight} @ ${summaryFPS} FPS successfully.`);
+        } else {
+          setLastApplyMessage('Camera settings applied successfully.');
+        }
+      } else {
+        setLastApplyMessage(messages.join(' '));
+      }
+
+      return newSettings;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to apply camera settings';
+      setError(message);
+      setLastApplyMessage(message);
+      return null;
+    }
+  }, []);
+
+  const isSupported = capabilities !== null;
+  
+  // Advanced controls (exposure, ISO, focus) are typically only available on desktop Chrome
+  const hasAdvancedControls = Boolean(
+    capabilities?.exposureMode || capabilities?.exposureTime || capabilities?.iso || capabilities?.focusMode
+  );
+
+  return {
+    capabilities,
+    currentSettings,
+    applySettings,
+    applyPreset,
+    applyBasicSettings,
+    isSupported,
+    hasAdvancedControls,
+    error,
+    lastApplyMessage,
+    clearLastApplyMessage,
+  };
+}

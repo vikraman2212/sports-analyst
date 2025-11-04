@@ -22,8 +22,13 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useCameraFeed } from '../hooks/useCameraFeed';
 import { useInference } from '../hooks/useInference';
 import { useCameraDiagnostics } from '../hooks/useCameraDiagnostics';
+import { useAutoStop } from '../hooks/useAutoStop';
 import { CameraGuidance } from './CameraGuidance';
-import type { CalibrationProfile, DeliveryResult } from '../lib/types';
+import { CameraCalibrator } from './CameraCalibrator';
+import { CameraSettings } from './CameraSettings';
+import { RecordingIndicator } from './RecordingIndicator';
+import { detectBallInFrame } from '../lib/detection';
+import type { CalibrationProfile, CameraConstraints, DeliveryResult } from '../lib/types';
 
 export interface CameraViewProps {
   /**
@@ -53,6 +58,52 @@ export interface CameraViewProps {
   onRecordingStop?: () => void;
 
   /**
+   * Callback when calibration completes
+   */
+  onCalibrationComplete?: (pitchLengthPixels: number) => void;
+
+  /**
+   * Whether calibration mode is active
+   */
+  isCalibrating?: boolean;
+
+  /**
+   * Callback when calibration is cancelled
+   */
+  onCancelCalibration?: () => void;
+
+  /**
+   * Pitch length in meters for calibration
+   */
+  pitchLengthMeters?: number;
+
+  /**
+   * Callback when user requests calibration from camera guidance
+   */
+  onRequestCalibration?: () => void;
+
+  /**
+   * Callback when user requests camera settings adjustment
+   */
+  onRequestSettings?: () => void;
+
+  /**
+   * Whether camera settings panel is open
+   */
+  isSettingsOpen?: boolean;
+
+  /**
+   * Callback when camera settings panel should close
+   */
+  onCloseSettings?: () => void;
+
+  /**
+   * Callback when camera settings are changed
+   * Used to save settings to calibration profile
+   */
+  onCameraSettingsChanged?: (settings: CameraConstraints) => void;
+
+  /**
    * Optional CSS class name
    */
   className?: string;
@@ -76,10 +127,21 @@ export function CameraView({
   onAnalysisError,
   onRecordingStart,
   onRecordingStop,
+  onCalibrationComplete,
+  isCalibrating = false,
+  onCancelCalibration,
+  pitchLengthMeters = 20.12,
+  onRequestCalibration,
+  onRequestSettings,
+  isSettingsOpen = false,
+  onCloseSettings,
+  onCameraSettingsChanged,
   className = '',
   resetTrigger = 0,
 }: CameraViewProps) {
-  // Camera feed hook
+  // Camera feed hook - Use saved settings from calibration profile, or defaults
+  // Defaults prefer high quality: 60 FPS, 1080p, rear camera
+  // But will gracefully fall back if device doesn't support it
   const {
     isActive: isCameraActive,
     isLoading: isCameraLoading,
@@ -90,12 +152,30 @@ export function CameraView({
     stopCamera,
     captureFrame,
   } = useCameraFeed({
-    facingMode: 'environment', // Rear camera on mobile
-    frameRate: 30,
+    width: calibration?.cameraSettings?.width || 1920,
+    height: calibration?.cameraSettings?.height || 1080,
+    frameRate: calibration?.cameraSettings?.frameRate || 60, // Prefer 60 FPS, fallback if unsupported
+    facingMode: calibration?.cameraSettings?.facingMode || 'environment',
   });
 
   // Camera diagnostics hook
   const { diagnostics, updateWithFrame } = useCameraDiagnostics(stream);
+
+  // Auto-stop hook - automatically stop recording when ball exits frame
+  const autoStopConfig = {
+    enabled: true, // TODO: make configurable via settings
+    threshold: 30, // 30 frames without detection (~1s at 30 FPS)
+    minFrames: 10, // Minimum frames before auto-stop can trigger
+    safetyTimeout: 10000, // 10 second max recording
+  };
+
+  const { 
+    state: autoStopState, 
+    onFrame: onAutoStopFrame, 
+    reset: resetAutoStop,
+    startTimeout,
+    stopTimeout 
+  } = useAutoStop(autoStopConfig);
 
   // Inference hook
   const {
@@ -135,13 +215,24 @@ export function CameraView({
   useEffect(() => {
     if (resetTrigger > 0) {
       reset();
+      resetAutoStop();
     }
-  }, [resetTrigger, reset]);
+  }, [resetTrigger, reset, resetAutoStop]);
 
   /**
-   * Frame capture loop during recording
+   * Watch for auto-stop trigger
+   * When shouldStop becomes true, automatically stop recording
    */
-  const captureLoop = useCallback(() => {
+  useEffect(() => {
+    if (autoStopState.shouldStop && isRecording.current) {
+      handleStopRecording();
+    }
+  }, [autoStopState.shouldStop]); // handleStopRecording added below
+
+  /**
+   * Frame capture loop during recording with auto-stop detection
+   */
+  const captureLoop = useCallback(async () => {
     if (!isRecording.current) return;
 
     const frame = captureFrame();
@@ -149,11 +240,22 @@ export function CameraView({
       addFrame(frame);
       // Update diagnostics with captured frame
       updateWithFrame(frame.imageData, frame.timestampMs);
+
+      // Run detection on frame for auto-stop logic
+      // This is a lightweight check - full analysis happens in stopAndAnalyze
+      try {
+        const detection = await detectBallInFrame(frame);
+        const hasDetection = detection !== null && detection.confidence > 0.3;
+        onAutoStopFrame(hasDetection);
+      } catch {
+        // If detection fails, treat as no detection
+        onAutoStopFrame(false);
+      }
     }
 
     // Continue capturing at ~30fps
     recordingInterval.current = window.setTimeout(captureLoop, 33);
-  }, [captureFrame, addFrame, updateWithFrame]);
+  }, [captureFrame, addFrame, updateWithFrame, onAutoStopFrame]);
 
   /**
    * Start recording delivery
@@ -165,9 +267,11 @@ export function CameraView({
 
     isRecording.current = true;
     startRecording();
+    resetAutoStop(); // Reset auto-stop state
+    startTimeout(); // Start safety timeout
     captureLoop();
     onRecordingStart?.();
-  }, [isCameraActive, startRecording, captureLoop, onRecordingStart]);
+  }, [isCameraActive, startRecording, resetAutoStop, startTimeout, captureLoop, onRecordingStart]);
 
   /**
    * Stop recording and analyze
@@ -180,6 +284,7 @@ export function CameraView({
       recordingInterval.current = null;
     }
 
+    stopTimeout(); // Stop safety timeout
     onRecordingStop?.();
 
     // Run analysis
@@ -189,7 +294,7 @@ export function CameraView({
       const errorMessage = err instanceof Error ? err.message : 'Analysis failed';
       onAnalysisError?.(errorMessage);
     }
-  }, [stopAndAnalyze, calibration, onRecordingStop, onAnalysisError]);
+  }, [stopAndAnalyze, calibration, stopTimeout, onRecordingStop, onAnalysisError]);
 
   /**
    * Reset for next delivery
@@ -224,8 +329,8 @@ export function CameraView({
 
   return (
     <div className={`camera-view ${className}`}>
-      {/* Video Container */}
-      <div className="camera-view__video-container" role="region" aria-label="Cricket ball camera view">
+      {/* Video Container - relative positioning to contain absolute overlays */}
+      <div className="camera-view__video-container relative" role="region" aria-label="Cricket ball camera view">
         <video
           ref={videoRef}
           className="camera-view__video"
@@ -244,23 +349,25 @@ export function CameraView({
         )}
 
         {/* Camera Guidance Overlay */}
-        {isCameraActive && !isRecording.current && !isAnalyzing && !hasResult && !hasError && (
+        {isCameraActive && !isRecording.current && !isAnalyzing && !hasResult && !hasError && !isCalibrating && (
           <div className="camera-view__guidance-overlay">
-            <CameraGuidance diagnostics={diagnostics} showTechnicalDetails />
+            <CameraGuidance 
+              diagnostics={diagnostics} 
+              showTechnicalDetails 
+              onOpenCalibration={onRequestCalibration}
+              onOpenSettings={onRequestSettings}
+            />
           </div>
         )}
 
-        {/* Recording Indicator */}
-        {isRecording.current && !isAnalyzing && (
-          <div className="camera-view__overlay camera-view__overlay--recording" role="status" aria-live="polite">
-            <div className="camera-view__recording-indicator">
-              <span className="camera-view__recording-dot" aria-hidden="true" />
-              <span className="camera-view__recording-text">
-                Recording ({frameCount} frames)
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Recording Indicator with Auto-Stop Countdown */}
+        <RecordingIndicator
+          isRecording={isRecording.current && !isAnalyzing}
+          autoStopState={autoStopState}
+          fps={diagnostics.inferredFPS || diagnostics.reportedFPS || 30}
+          onManualStop={handleStopRecording}
+          frameCount={frameCount}
+        />
 
         {/* Analysis Progress */}
         {isAnalyzing && (
@@ -341,6 +448,30 @@ export function CameraView({
               >
                 Record Next Delivery
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Calibration Overlay */}
+        {isCalibrating && videoRef.current && (
+          <CameraCalibrator
+            videoRef={videoRef}
+            pitchLengthMeters={pitchLengthMeters}
+            onCalibrationComplete={onCalibrationComplete || (() => {})}
+            onCancel={onCancelCalibration || (() => {})}
+          />
+        )}
+
+        {/* Camera Settings Overlay */}
+        {isSettingsOpen && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md">
+              <CameraSettings
+                stream={stream}
+                initialSettings={calibration?.cameraSettings ?? null}
+                onClose={onCloseSettings || (() => {})}
+                onSettingsChanged={onCameraSettingsChanged}
+              />
             </div>
           </div>
         )}
@@ -429,13 +560,18 @@ export function CameraView({
           right: 1rem;
           max-width: 400px;
           z-index: 10;
+          pointer-events: auto;
         }
 
         @media (max-width: 640px) {
           .camera-view__guidance-overlay {
-            top: 0.5rem;
+            position: fixed;
+            top: env(safe-area-inset-top, 0.5rem);
             left: 0.5rem;
             right: 0.5rem;
+            bottom: auto;
+            z-index: 40;
+            max-width: none;
           }
         }
 

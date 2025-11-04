@@ -58,44 +58,217 @@ Verify camera initialization and permission handling.
 
 ---
 
-## Test Flow 2: Calibration Process
+## Test Flow 2: Camera Calibration Workflow
 
 ### Objective
 
-Validate calibration workflow and accuracy.
+Validate interactive two-point calibration wizard and profile management.
+
+### Prerequisites
+
+- Camera access granted
+- Camera feed active and stable
+- Visible cricket pitch or marked distance (20.12m)
 
 ### Steps
 
-1. **Position Camera**
+#### 2A: Initial Calibration via Status Badge
 
-   - Mount device on stable surface
-   - Frame the pitch showing bowler to batter distance
-   - Ensure camera is level
+1. **Verify Uncalibrated State**
 
-2. **Perform Calibration** (Future UI)
+   - Launch application
+   - Below pitch/weight selectors, locate CalibrationStatusBadge
+   - Expected: "🟡 Uncalibrated" with yellow indicator
+   - Hover text: "No camera calibration performed"
 
-   - Mark bowler release point
-   - Mark batter delivery point
-   - Verify pixel distance calculated
-   - Expected: Calibration profile created
+2. **Start Calibration**
 
-3. **Verify Calibration Values**
+   - Click "Calibrate" button on badge
+   - Expected: Calibration overlay appears over camera feed
+   - Instruction text: "Mark the bowling crease"
+   - Camera feed remains live in background
 
-   - Check `pitchLengthPixels` is reasonable (400-800px typical)
-   - Verify `referenceDistanceMeters` is 20.12
-   - Calculate `pixelsPerMeter` ratio
-   - Expected: Values are within expected ranges
+3. **Mark First Point (Bowling Crease)**
 
-4. **Test Recalibration**
-   - Move camera slightly
-   - Recalibrate
-   - Verify new values reflect changed position
+   - **Desktop:** Click on bowling crease in video
+   - **Mobile:** Tap on bowling crease in video
+   - Expected:
+     - Green crosshair marker appears at clicked/tapped position
+     - Instruction updates: "Mark the batting crease"
+     - First point coordinates captured
+
+4. **Mark Second Point (Batting Crease)**
+
+   - **Desktop:** Click on batting crease in video
+   - **Mobile:** Tap on batting crease in video
+   - Expected:
+     - Second green crosshair marker appears
+     - Line drawn connecting both points
+     - Pixel distance calculated and displayed
+     - Example: "485 pixels measured"
+
+5. **Validation Feedback**
+
+   - Check validation status indicator:
+     - ✅ **Green checkmark:** Valid calibration (50-3840px range)
+     - ❌ **Red X:** Invalid calibration
+   - If invalid:
+     - Red error text explains issue ("Too close", "Too far", etc.)
+     - "Retry" button available
+
+6. **Accept Calibration**
+
+   - Click "Accept Calibration" button
+   - Expected:
+     - New profile created with timestamp
+     - Profile name: "Calibration Oct 28, 10:30 AM"
+     - Overlay closes
+     - CalibrationStatusBadge updates
+
+7. **Verify Calibrated State**
+
+   - Check CalibrationStatusBadge
+   - Expected: "🟢" green indicator
+   - Shows: "485px / 20.12m (24.1 px/m)"
+   - Button text changes to "Recalibrate"
+
+#### 2B: Calibration via Camera Guidance Warning
+
+1. **Trigger Warning State**
+
+   - Cover camera partially or reduce lighting
+   - Expected: CameraGuidance overlay appears
+   - Warning: "⚠️ Camera Needs Adjustment"
+
+2. **Use Calibration Button**
+
+   - Locate action buttons at bottom of guidance
+   - Click "📐 Calibrate Camera" button
+   - Expected: Same calibration workflow as 2A steps 2-7
+
+#### 2C: Recalibration Workflow
+
+1. **Start Recalibration**
+
+   - With existing calibration active
+   - Click "Recalibrate" on CalibrationStatusBadge
+   - Expected: Calibration overlay appears
+
+2. **Change Camera Position**
+
+   - Move camera to different angle/distance
+   - Perform calibration again (steps 2A.3-2A.6)
+
+3. **Verify New Profile Created**
+
+   - New profile should be created
+   - Timestamp updated
+   - Previous calibration preserved (not overwritten)
+   - New profile becomes active
+
+#### 2D: Cancel Calibration
+
+1. **Start Calibration**
+
+   - Click "Calibrate" button
+
+2. **Mark First Point Only**
+
+   - Click/tap once on video
+
+3. **Cancel Workflow**
+
+   - Click "Cancel" button
+   - Expected:
+     - Overlay closes
+     - No profile created
+     - Previous calibration state unchanged
+
+#### 2E: Touch Interaction (Mobile)
+
+1. **Test Touch Precision**
+
+   - Use finger to tap bowling crease
+   - Verify marker appears at touch location
+   - Tap batting crease
+   - Verify accuracy of touch coordinates
+
+2. **Test Zoom Interference**
+
+   - Attempt pinch-to-zoom on video
+   - Expected: Zoom disabled during calibration
+   - Touch events capture coordinates correctly
+
+#### 2F: Edge Cases
+
+1. **Points Too Close**
+
+   - Mark two points < 50px apart
+   - Expected: Red X, error message
+   - "Points are too close together"
+
+2. **Points Outside Video**
+
+   - Click outside video bounds
+   - Expected: Click ignored or error shown
+
+3. **Very Large Distance**
+
+   - Mark points at opposite corners of 4K video
+   - If > 3840px:
+     - Expected: Warning (still accepted)
+     - "Distance seems unusually large"
+
+4. **Interruption During Calibration**
+   - Start calibration
+   - Start recording (if possible)
+   - Expected: Calibration aborted or recording blocked
 
 ### Pass Criteria
 
-- Calibration completes without errors
-- Values are mathematically correct
-- Recalibration updates values appropriately
+- ✅ Touch and mouse input both work
+- ✅ Markers appear at exact clicked/tapped positions
+- ✅ Pixel distance calculation is accurate
+- ✅ Validation catches unrealistic values (< 50px, > 3840px)
+- ✅ Profile created with correct data
+- ✅ CalibrationStatusBadge updates immediately
+- ✅ Cancel workflow works without side effects
+- ✅ Multiple calibrations create separate profiles
+- ✅ Active profile persists across page reloads
+- ✅ Speed calculations use new calibration immediately
+
+### Expected Values (Reference)
+
+**Typical Calibration Results:**
+
+- Video width: 1280px → Pitch ~400-600px
+- Video width: 640px → Pitch ~200-300px
+- Video width: 1920px (Full HD) → Pitch ~600-900px
+
+**Pixel-to-Meter Ratios:**
+
+- Standard pitch (20.12m):
+  - 485px → 24.1 px/m
+  - 512px → 25.4 px/m
+  - 600px → 29.8 px/m
+
+### Troubleshooting
+
+**Issue:** Markers don't appear at clicked position
+
+- **Solution:** Check video aspect ratio, ensure coordinates calculated relative to video element
+
+**Issue:** Validation always shows red X
+
+- **Solution:** Check pixel distance calculation, verify validation thresholds
+
+**Issue:** Profile not created after accepting
+
+- **Solution:** Check browser console, verify localStorage not full, check createProfile() logic
+
+**Issue:** CalibrationStatusBadge doesn't update
+
+- **Solution:** Verify React state updates, check useCalibrationProfiles hook
 
 ---
 

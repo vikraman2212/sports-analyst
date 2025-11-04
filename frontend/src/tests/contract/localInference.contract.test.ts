@@ -9,6 +9,7 @@
  */
 
 import type { FrameSample, CalibrationProfile } from '../../lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 describe('Local Inference Contract', () => {
   describe('analyzeDelivery function', () => {
@@ -30,12 +31,10 @@ describe('Local Inference Contract', () => {
         },
       ];
 
-      const mockCalibration: CalibrationProfile = {
+      const mockCalibration = createMockCalibration({
         pitchLengthPixels: 500,
-        referenceDistanceMeters: 20.12,
-        homographyMatrix: null,
         ballMassGrams: 156,
-      };
+      });
 
   // Function should accept these parameters without type errors
   const result = analyzeDelivery(mockFrames, mockCalibration);
@@ -51,12 +50,9 @@ describe('Local Inference Contract', () => {
         { frameIndex: 0, timestampMs: 0, imageData: createNonBlankImageData(640, 480) },
         { frameIndex: 1, timestampMs: 33, imageData: createNonBlankImageData(640, 480) },
       ];
-      const mockCalibration: CalibrationProfile = {
+      const mockCalibration = createMockCalibration({
         pitchLengthPixels: 500,
-        referenceDistanceMeters: 20.12,
-        homographyMatrix: null,
-        ballMassGrams: 156,
-      };
+      });
 
   const result = analyzeDelivery(mockFrames, mockCalibration);
   expect(result).toBeInstanceOf(Promise);
@@ -73,12 +69,9 @@ describe('Local Inference Contract', () => {
         imageData: createNonBlankImageData(640, 480),
       }));
 
-      const mockCalibration: CalibrationProfile = {
+      const mockCalibration = createMockCalibration({
         pitchLengthPixels: 500,
-        referenceDistanceMeters: 20.12,
-        homographyMatrix: null,
-        ballMassGrams: 156,
-      };
+      });
 
       const result = await analyzeDelivery(mockFrames, mockCalibration);
       
@@ -101,12 +94,7 @@ describe('Local Inference Contract', () => {
       const { analyzeDelivery } = await import('@/lib/analyzeDelivery');
       
       const mockFrames: FrameSample[] = []; // Empty frames should cause error
-      const mockCalibration: CalibrationProfile = {
-        pitchLengthPixels: 500,
-        referenceDistanceMeters: 20.12,
-        homographyMatrix: null,
-        ballMassGrams: 156,
-      };
+      const mockCalibration = createMockCalibration();
 
       await expect(
         analyzeDelivery(mockFrames, mockCalibration)
@@ -139,12 +127,7 @@ describe('Local Inference Contract', () => {
         imageData: createNonBlankImageData(640, 480),
       }));
 
-      const mockCalibration: CalibrationProfile = {
-        pitchLengthPixels: 500,
-        referenceDistanceMeters: 20.12,
-        homographyMatrix: null,
-        ballMassGrams: 156,
-      };
+      const mockCalibration = createMockCalibration();
 
       const startTime = performance.now();
       const result = await analyzeDelivery(mockFrames, mockCalibration);

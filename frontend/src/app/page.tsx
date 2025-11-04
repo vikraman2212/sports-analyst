@@ -7,16 +7,18 @@
 
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { CameraView } from '@/components/CameraView';
 import { SpeedDisplay } from '@/components/SpeedDisplay';
 import { createCricketPitchCalibration, createPitchCalibration } from '@/lib/calibration';
 import { PitchLengthSelector } from '@/components/PitchLengthSelector';
 import { BallWeightSelector } from '@/components/BallWeightSelector';
+import { CalibrationStatusBadge } from '@/components/CalibrationStatusBadge';
 import { usePitchLength } from '@/hooks/usePitchLength';
 import { useBallWeight } from '@/hooks/useBallWeight';
-import type { DeliveryResult } from '@/lib/types';
+import { useCalibrationProfiles } from '@/hooks/useCalibrationProfiles';
+import type { CameraConstraints, DeliveryResult } from '@/lib/types';
 import type { ReplaySession } from '@/lib/replay/types';
 import { exportReplay } from '@/lib/export/replayExport';
 import type { ExportFormat } from '@/lib/replay/types';
@@ -40,17 +42,56 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showQualityBanner, setShowQualityBanner] = useState(true);
+
+  // Initialize banner visibility from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const dismissed = localStorage.getItem('qualityBannerDismissed') === 'true';
+        if (dismissed) {
+          setShowQualityBanner(false);
+        }
+      } catch {
+        // Ignore storage failures and show banner by default
+      }
+    }
+  }, []);
+  
   const { state: pitchState } = usePitchLength();
   const { state: ballWeightState } = useBallWeight();
+  const { activeProfile, createProfile, updateProfile } = useCalibrationProfiles();
 
-  // Create default calibration (memoized to avoid recreating on every render)
+  // Create calibration based on active profile and current pitch/weight settings
   const calibration = useMemo(() => {
-    // Standard uses default helper; others use explicit meters
-    if (pitchState.meters === 20.12) {
-      return createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, ballWeightState.grams);
+    // If user has performed calibration, use their measured pixels
+    if (activeProfile && activeProfile.id !== 'default') {
+      return {
+        ...activeProfile,
+        referenceDistanceMeters: pitchState.meters,
+        ballMassGrams: ballWeightState.grams,
+      };
     }
-    return createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters, ballWeightState.grams);
-  }, [pitchState.meters, ballWeightState.grams]);
+
+    // Otherwise use default pixels but persist stored camera metadata
+    const base = pitchState.meters === 20.12
+      ? createCricketPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, ballWeightState.grams)
+      : createPitchCalibration(DEFAULT_PITCH_LENGTH_PIXELS, pitchState.meters, ballWeightState.grams);
+
+    if (!activeProfile) {
+      return base;
+    }
+
+    return {
+      ...base,
+      id: activeProfile.id,
+      name: activeProfile.name,
+      cameraSettings: activeProfile.cameraSettings ?? base.cameraSettings,
+      deviceInfo: activeProfile.deviceInfo ?? base.deviceInfo,
+    };
+  }, [activeProfile, pitchState.meters, ballWeightState.grams]);
 
   const pitchLabel = useMemo(() => (
     pitchState.meters === 20.12 ? 'Standard' : (pitchState.meters === 16 ? 'Youth' : 'Custom')
@@ -120,6 +161,97 @@ export default function Home() {
   }, []);
 
   /**
+   * Handle calibration button click
+   */
+  const handleStartCalibration = useCallback(() => {
+    setIsCalibrating(true);
+    setCurrentResult(null);
+    setReplaySession(null);
+    setShowReplay(false);
+  }, []);
+
+  /**
+   * Handle calibration completion
+   */
+  const handleCalibrationComplete = useCallback((pitchLengthPixels: number) => {
+    // Create a new calibration profile with the measured pixels
+    const timestamp = new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    
+    createProfile(
+      `Calibration ${timestamp}`,
+      pitchLengthPixels,
+      pitchState.meters,
+      ballWeightState.grams
+    );
+    
+    setIsCalibrating(false);
+  }, [createProfile, pitchState.meters, ballWeightState.grams]);
+
+  /**
+   * Handle calibration cancellation
+   */
+  const handleCancelCalibration = useCallback(() => {
+    setIsCalibrating(false);
+  }, []);
+
+  /**
+   * Handle camera settings open
+   */
+  const handleOpenSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+  }, []);
+
+  /**
+   * Handle camera settings close
+   */
+  const handleCloseSettings = useCallback(() => {
+    setIsSettingsOpen(false);
+  }, []);
+
+  /**
+   * Handle camera settings changed
+   * Saves settings to active calibration profile (including default)
+   */
+  const handleCameraSettingsChanged = useCallback((settings: CameraConstraints) => {
+    if (!activeProfile) {
+      return;
+    }
+
+    const resolution = settings.width && settings.height
+      ? `${settings.width}x${settings.height}`
+      : undefined;
+    const fps = settings.frameRate ? Math.round(settings.frameRate) : undefined;
+    const facingMode = settings.facingMode ?? activeProfile.deviceInfo?.facingMode;
+    const deviceInfo = {
+      ...(activeProfile.deviceInfo ?? {}),
+      lastUpdatedAt: new Date().toISOString(),
+    };
+
+    if (resolution) {
+      deviceInfo.resolution = resolution;
+    }
+    if (typeof fps === 'number' && !Number.isNaN(fps)) {
+      deviceInfo.fps = fps;
+    }
+    if (facingMode) {
+      deviceInfo.facingMode = facingMode;
+    }
+    if (typeof navigator !== 'undefined') {
+      deviceInfo.userAgent = navigator.userAgent;
+    }
+
+    updateProfile(activeProfile.id, {
+      cameraSettings: settings,
+      deviceInfo,
+    });
+  }, [activeProfile, updateProfile]);
+
+  /**
    * Toggle replay view
    */
   const handleToggleReplay = useCallback(() => {
@@ -184,6 +316,27 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quality Notice Banner */}
+        {showQualityBanner && (
+          <div className="mb-6 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-4 relative" role="region" aria-label="Environment quality notice">
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.setItem('qualityBannerDismissed', 'true');
+                } catch {}
+                setShowQualityBanner(false);
+              }}
+              aria-label="Dismiss quality notice"
+              className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md p-1 text-yellow-900/80 hover:text-yellow-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 dark:text-yellow-100/80 dark:hover:text-yellow-100"
+            >
+              <span aria-hidden>✕</span>
+            </button>
+            <p className="text-sm text-yellow-900 dark:text-yellow-100 pr-8">
+              <span className="font-semibold">Heads up:</span> Best results require good lighting and a stable, high-quality camera. In low light or with low-quality cameras, detection accuracy and speed may degrade. Check the <span className="font-medium">Camera Guidance</span> panel for tips.
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Camera View Section */}
           <div className="space-y-4">
@@ -195,6 +348,12 @@ export default function Home() {
               <div className="mb-4 space-y-3">
                 <PitchLengthSelector />
                 <BallWeightSelector />
+                {activeProfile && (
+                  <CalibrationStatusBadge
+                    profile={activeProfile}
+                    onRecalibrate={handleStartCalibration}
+                  />
+                )}
               </div>
               <CameraView
                 calibration={calibration}
@@ -203,6 +362,15 @@ export default function Home() {
                 onRecordingStart={handleRecordingStart}
                 onRecordingStop={handleRecordingStop}
                 resetTrigger={resetTrigger}
+                isCalibrating={isCalibrating}
+                onCalibrationComplete={handleCalibrationComplete}
+                onCancelCalibration={handleCancelCalibration}
+                pitchLengthMeters={pitchState.meters}
+                onRequestCalibration={handleStartCalibration}
+                onRequestSettings={handleOpenSettings}
+                isSettingsOpen={isSettingsOpen}
+                onCloseSettings={handleCloseSettings}
+                onCameraSettingsChanged={handleCameraSettingsChanged}
               />
             </div>
 

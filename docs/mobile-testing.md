@@ -5,6 +5,7 @@ This guide explains how to test the Cricket Ball Speed Tracker on mobile devices
 ## Why HTTPS is Required
 
 Modern browsers require HTTPS for camera access via `getUserMedia()` API for security reasons:
+
 - **iOS Safari**: Requires HTTPS for camera access (except localhost)
 - **Chrome Android**: Requires HTTPS for camera access (except localhost)
 - **Security**: Prevents malicious sites from accessing camera without user consent
@@ -25,6 +26,7 @@ pnpm dev
 ```
 
 Note the port number (usually 3000 or 3001). You should see:
+
 ```
 ✓ Ready in 813ms
 - Local:    http://localhost:3000
@@ -117,8 +119,9 @@ Copy the **HTTPS forwarding URL** (e.g., `https://abc123.ngrok-free.app`)
 **Problem**: "Camera permission denied" or no camera prompt
 
 **Solutions**:
+
 1. **Check HTTPS**: Ensure you're using the `https://` URL, not `http://`
-2. **Browser settings**: 
+2. **Browser settings**:
    - iOS: Settings → Safari → Camera → Ask
    - Android: Settings → Apps → Chrome → Permissions → Camera → Allow
 3. **Reload page**: Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
@@ -129,6 +132,7 @@ Copy the **HTTPS forwarding URL** (e.g., `https://abc123.ngrok-free.app`)
 **Problem**: "Session expired" or connection drops
 
 **Solutions**:
+
 1. **Free tier limit**: ngrok free accounts have 2-hour session limits
 2. **Restart ngrok**: Simply run `ngrok http 3000` again
 3. **New URL**: You'll get a new random subdomain each time
@@ -139,6 +143,7 @@ Copy the **HTTPS forwarding URL** (e.g., `https://abc123.ngrok-free.app`)
 **Problem**: App feels sluggish or frames drop
 
 **Solutions**:
+
 1. **Close background apps**: Free up mobile device resources
 2. **Check FPS**: View camera diagnostics - should show ~30 FPS
 3. **Network**: Switch to faster WiFi or 4G/5G
@@ -151,6 +156,7 @@ Copy the **HTTPS forwarding URL** (e.g., `https://abc123.ngrok-free.app`)
 **Explanation**: This is ngrok's free tier behavior to prevent abuse
 
 **Solutions**:
+
 1. **Click "Visit Site"**: Normal for free accounts
 2. **Upgrade ngrok**: Paid plans remove the splash screen
 3. **Alternative**: Use Cloudflare Tunnel (see Alternatives section)
@@ -194,11 +200,12 @@ tunnels:
   cricket:
     proto: http
     addr: 3000
-    subdomain: cricket-tracker  # Requires paid plan
+    subdomain: cricket-tracker # Requires paid plan
     inspect: true
 ```
 
 Then run:
+
 ```bash
 ngrok start cricket
 ```
@@ -287,20 +294,21 @@ When testing on mobile, verify:
 
 ## Common Issues and Solutions
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| No camera prompt | Not using HTTPS | Use ngrok HTTPS URL |
-| Black camera feed | Camera busy/in use | Close other apps using camera |
-| Low FPS (<20) | Device overloaded | Close background apps, restart browser |
-| "Session expired" | ngrok free 2hr limit | Restart ngrok, get new URL |
-| Slow loading | Network latency | Use local network first, check WiFi |
-| Touch targets too small | Not responsive | Report as bug - should be mobile-friendly |
+| Issue                   | Cause                | Solution                                  |
+| ----------------------- | -------------------- | ----------------------------------------- |
+| No camera prompt        | Not using HTTPS      | Use ngrok HTTPS URL                       |
+| Black camera feed       | Camera busy/in use   | Close other apps using camera             |
+| Low FPS (<20)           | Device overloaded    | Close background apps, restart browser    |
+| "Session expired"       | ngrok free 2hr limit | Restart ngrok, get new URL                |
+| Slow loading            | Network latency      | Use local network first, check WiFi       |
+| Touch targets too small | Not responsive       | Report as bug - should be mobile-friendly |
 
 ## Monitoring During Tests
 
 ### ngrok Web Interface
 
 Access at `http://127.0.0.1:4040` to see:
+
 - All HTTP requests from your mobile device
 - Request/response details
 - Connection timing
@@ -313,11 +321,13 @@ Useful for debugging API calls and performance issues.
 For remote debugging:
 
 **iOS Safari**:
+
 1. Enable "Web Inspector" on iPhone: Settings → Safari → Advanced → Web Inspector
 2. Connect iPhone to Mac via USB
 3. Safari on Mac → Develop → [Your iPhone] → [ngrok URL]
 
 **Chrome Android**:
+
 1. Enable "USB Debugging" on Android
 2. Connect to computer via USB
 3. Chrome on desktop → `chrome://inspect` → Find your device
@@ -373,6 +383,7 @@ ngrok http 3001
 ## Support
 
 If you encounter issues not covered in this guide:
+
 1. Check ngrok status: https://status.ngrok.com/
 2. Review browser console for errors
 3. Check camera diagnostics in the app

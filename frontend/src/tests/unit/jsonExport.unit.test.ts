@@ -14,7 +14,8 @@ import {
   isShareSupported,
   isClipboardSupported,
 } from '../../lib/export/jsonExport';
-import type { DeliveryResult, CalibrationProfile, TrajectoryPoint } from '../../lib/types';
+import type { DeliveryResult, TrajectoryPoint } from '../../lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 describe('JSON Export Utility', () => {
   // Sample test data
@@ -33,11 +34,9 @@ describe('JSON Export Utility', () => {
     warnings: ['Low lighting detected'],
   };
 
-  const sampleCalibration: CalibrationProfile = {
+  const sampleCalibration = createMockCalibration({
     pitchLengthPixels: 512,
-    referenceDistanceMeters: 20.12,
-    homographyMatrix: null,
-  };
+  });
 
   describe('exportDeliveryToJSON', () => {
     it('should export delivery result to JSON object', () => {

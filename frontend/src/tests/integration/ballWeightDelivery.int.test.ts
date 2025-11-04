@@ -3,7 +3,8 @@
  */
 
 import { analyzeDelivery } from '@/lib/analyzeDelivery';
-import type { CalibrationProfile, FrameSample } from '@/lib/types';
+import type { FrameSample } from '@/lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 describe('Ball Weight Integration Test', () => {
   // Mock frame with ball detection
@@ -40,12 +41,10 @@ describe('Ball Weight Integration Test', () => {
   ];
 
   it('processes delivery with standard ball weight (156g)', async () => {
-    const calibration: CalibrationProfile = {
+    const calibration = createMockCalibration({
       pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
       ballMassGrams: 156,
-      homographyMatrix: null,
-    };
+    });
 
     const frames = createFrames();
     const result = await analyzeDelivery(frames, calibration);
@@ -55,12 +54,10 @@ describe('Ball Weight Integration Test', () => {
   });
 
   it('processes delivery with youth ball weight (135g)', async () => {
-    const calibration: CalibrationProfile = {
+    const calibration = createMockCalibration({
       pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
       ballMassGrams: 135,
-      homographyMatrix: null,
-    };
+    });
 
     const frames = createFrames();
     const result = await analyzeDelivery(frames, calibration);
@@ -70,12 +67,10 @@ describe('Ball Weight Integration Test', () => {
   });
 
   it('generates appropriate warnings for light ball with high speed', async () => {
-    const calibration: CalibrationProfile = {
+    const calibration = createMockCalibration({
       pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 100, // Light ball
-      homographyMatrix: null,
-    };
+      ballMassGrams: 100,
+    });
 
     const frames = createFrames();
     const result = await analyzeDelivery(frames, calibration);
@@ -88,12 +83,10 @@ describe('Ball Weight Integration Test', () => {
   });
 
   it('validates extreme ball weights generate warnings', async () => {
-    const calibrationTooLight: CalibrationProfile = {
+    const calibrationTooLight = createMockCalibration({
       pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 30, // Too light
-      homographyMatrix: null,
-    };
+      ballMassGrams: 30,
+    });
 
     const frames = createFrames();
     const result = await analyzeDelivery(frames, calibrationTooLight);
