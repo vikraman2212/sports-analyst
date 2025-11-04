@@ -15,9 +15,15 @@ describe('calculateSpeed with different pitch lengths', () => {
   it('speed is proportional to referenceDistanceMeters', () => {
     const traj = makeTrajectory();
 
-    const calibStandard = createMockCalibration();
+    const calibStandard = createMockCalibration({
+      pitchLengthPixels: 1000,
+      referenceDistanceMeters: 20.12,
+    });
 
-    const calibYouth = createMockCalibration();
+    const calibYouth = createMockCalibration({
+      pitchLengthPixels: 1000,
+      referenceDistanceMeters: 16.0,
+    });
 
     const vStandard = calculateSpeed(traj, calibStandard);
     const vYouth = calculateSpeed(traj, calibYouth);

@@ -31,9 +31,17 @@ describe('Integration: pitch length scaling', () => {
   it('analyzeDelivery produces speed proportional to referenceDistanceMeters', async () => {
     const { analyzeDelivery } = await import('@/lib/analyzeDelivery');
 
-    const calibStandard = createMockCalibration({ballMassGrams: 156});
+    const calibStandard = createMockCalibration({
+      pitchLengthPixels: 900,
+      referenceDistanceMeters: 20.12,
+      ballMassGrams: 156,
+    });
 
-    const calibYouth = createMockCalibration({ballMassGrams: 156});
+    const calibYouth = createMockCalibration({
+      pitchLengthPixels: 900,
+      referenceDistanceMeters: 16.0,
+      ballMassGrams: 156,
+    });
 
     const resultStandard = await analyzeDelivery(frames, calibStandard);
     const resultYouth = await analyzeDelivery(frames, calibYouth);
