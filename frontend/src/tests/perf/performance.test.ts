@@ -13,6 +13,7 @@ import { calculateSpeed } from '../../lib/speed-calculation/speed';
 import { smoothTrajectory } from '../../lib/speed-calculation/trajectorySmoothing';
 import { generateWarnings } from '../../lib/speed-calculation/warnings';
 import type { TrajectoryPoint, CalibrationProfile, DeliveryResult } from '../../lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 // Performance thresholds from plan.md
 const THRESHOLDS = {
@@ -34,17 +35,6 @@ function createMockTrajectoryPoint(
     pixelX,
     pixelY,
     estimatedZ: null,
-  };
-}
-
-/**
- * Creates a mock calibration profile for testing
- */
-function createMockCalibration(): CalibrationProfile {
-  return {
-    pitchLengthPixels: 2012,
-    referenceDistanceMeters: 20.12,
-    homographyMatrix: null,
   };
 }
 

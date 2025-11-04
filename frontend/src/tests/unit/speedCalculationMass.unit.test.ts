@@ -4,6 +4,7 @@
 
 import { calculateSpeed } from '@/lib/speed-calculation/speed';
 import type { CalibrationProfile, TrajectoryPoint } from '@/lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 describe('Speed Calculation with Ball Mass', () => {
   // Helper to create consistent trajectory
@@ -16,12 +17,7 @@ describe('Speed Calculation with Ball Mass', () => {
   ];
 
   it('calculates speed with standard mass (156g)', () => {
-    const calibration: CalibrationProfile = {
-      pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 156,
-      homographyMatrix: null,
-    };
+    const calibration = createMockCalibration({pitchLengthPixels: 512, ballMassGrams: 156});
 
     const trajectory = createTrajectory();
     const speedKmh = calculateSpeed(trajectory, calibration);
@@ -31,12 +27,7 @@ describe('Speed Calculation with Ball Mass', () => {
   });
 
   it('calculates speed with youth mass (135g)', () => {
-    const calibration: CalibrationProfile = {
-      pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 135,
-      homographyMatrix: null,
-    };
+    const calibration = createMockCalibration({pitchLengthPixels: 512, ballMassGrams: 135});
 
     const trajectory = createTrajectory();
     const speedKmh = calculateSpeed(trajectory, calibration);
@@ -46,12 +37,7 @@ describe('Speed Calculation with Ball Mass', () => {
   });
 
   it('calculates speed with custom mass (200g)', () => {
-    const calibration: CalibrationProfile = {
-      pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 200,
-      homographyMatrix: null,
-    };
+    const calibration = createMockCalibration({pitchLengthPixels: 512, ballMassGrams: 200});
 
     const trajectory = createTrajectory();
     const speedKmh = calculateSpeed(trajectory, calibration);
@@ -61,19 +47,9 @@ describe('Speed Calculation with Ball Mass', () => {
   });
 
   it('speed calculation remains deterministic for same inputs', () => {
-    const calibration156: CalibrationProfile = {
-      pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 156,
-      homographyMatrix: null,
-    };
+    const calibration156 = createMockCalibration({pitchLengthPixels: 512, ballMassGrams: 156});
 
-    const calibration135: CalibrationProfile = {
-      pitchLengthPixels: 512,
-      referenceDistanceMeters: 20.12,
-      ballMassGrams: 135,
-      homographyMatrix: null,
-    };
+    const calibration135 = createMockCalibration({pitchLengthPixels: 512, ballMassGrams: 135});
 
     const trajectory = createTrajectory();
     

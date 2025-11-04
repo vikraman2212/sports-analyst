@@ -3,6 +3,7 @@
  */
 
 import type { FrameSample, CalibrationProfile } from '@/lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 function createNonBlankImageData(width: number, height: number): ImageData {
   const img = new ImageData(width, height);
@@ -32,19 +33,9 @@ describe('Integration: pitch length scaling', () => {
 
     const pitchLengthPixels = 900; // arbitrary calibration pixel length
 
-    const calibStandard: CalibrationProfile = {
-      pitchLengthPixels,
-      referenceDistanceMeters: 20.12,
-      homographyMatrix: null,
-      ballMassGrams: 156,
-    };
+    const calibStandard = createMockCalibration({ballMassGrams: 156});
 
-    const calibYouth: CalibrationProfile = {
-      pitchLengthPixels,
-      referenceDistanceMeters: 16.0,
-      homographyMatrix: null,
-      ballMassGrams: 156,
-    };
+    const calibYouth = createMockCalibration({ballMassGrams: 156});
 
     const resultStandard = await analyzeDelivery(frames, calibStandard);
     const resultYouth = await analyzeDelivery(frames, calibYouth);

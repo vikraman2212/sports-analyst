@@ -8,16 +8,13 @@
  */
 
 import type { FrameSample, CalibrationProfile } from '@/lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 describe('Insufficient Detections Error Handling', () => {
   let mockCalibration: CalibrationProfile;
 
   beforeEach(() => {
-    mockCalibration = {
-      pitchLengthPixels: 500,
-      referenceDistanceMeters: 20.12,
-      homographyMatrix: null,
-    };
+    mockCalibration = createMockCalibration({pitchLengthPixels: 500});
   });
 
   describe('Empty frames', () => {

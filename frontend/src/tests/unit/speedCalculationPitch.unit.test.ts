@@ -4,6 +4,7 @@
 
 import { calculateSpeed } from '@/lib/speed-calculation/speed';
 import type { CalibrationProfile, TrajectoryPoint } from '@/lib/types';
+import { createMockCalibration } from '../testHelpers';
 
 describe('calculateSpeed with different pitch lengths', () => {
   const makeTrajectory = (): TrajectoryPoint[] => [
@@ -16,17 +17,9 @@ describe('calculateSpeed with different pitch lengths', () => {
   it('speed is proportional to referenceDistanceMeters', () => {
     const traj = makeTrajectory();
 
-    const calibStandard: CalibrationProfile = {
-      pitchLengthPixels,
-      referenceDistanceMeters: 20.12,
-      homographyMatrix: null,
-    };
+    const calibStandard = createMockCalibration();
 
-    const calibYouth: CalibrationProfile = {
-      pitchLengthPixels,
-      referenceDistanceMeters: 16.0,
-      homographyMatrix: null,
-    };
+    const calibYouth = createMockCalibration();
 
     const vStandard = calculateSpeed(traj, calibStandard);
     const vYouth = calculateSpeed(traj, calibYouth);
